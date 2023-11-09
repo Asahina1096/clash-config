@@ -1,16 +1,5 @@
 #Steam Game Download CDN
 payload:
-  - 'cdn-ali.content.steamchina.com'
-  - 'xz.pphimalayanrt.com'
-  - 'lv.queniujq.cn'
-  - 'alibaba.cdn.steampipe.steamcontent.com'
-  - 'st.dl.eccdnx.com'
-  - 'st.dl.bscstorage.net'
-  - 'trts.baishancdnx.cn'
-  - 'dl.steam.clngaa.com'
-  - 'steampipe.steamcontent.tnkjmec.com'
-  - 'cdn.mileweb.cs.steampowered.com.8686c.com'
-  - 'st.dl.bscstorage.net'
   - '1.197.93.30'
   - '1.197.93.31'
   - '1.197.93.32'
