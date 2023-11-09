@@ -1,59 +1,33 @@
-port: 7890 # port of HTTP
-socks-port: 7891 # port of SOCKS5
-redir-port: 7892 # redir port for Linux and macOS
-allow-lan: false
-
-# Only applicable when setting allow-lan to true
-# "*": bind all IP addresses
-# 192.168.122.11: bind a single IPv4 address
-# "[aaaa::a8aa:ff:fe09:57d8]": bind a single IPv6 address
-bind-address: "*"
-
-# Rule / Global/ Direct (default is Rule)
-mode: Rule
-
-# set log level to stdout (default is info)
-# info / warning / error / debug / silent
+mixed-port: 7890
+allow-lan: true
+bind-address: '*'
+mode: rule
 log-level: info
+external-controller: '127.0.0.1:9090'
 
-external-controller: 127.0.0.1:9090 # RESTful API for clash
-
-# you can put the static web resource (such as clash-dashboard) to a directory, and clash would serve in `${API}/ui`
-# input is a relative path to the configuration directory or an absolute path
-#external-ui: "path/to/local/clash-dashboard"
-
-secret: "" # Secret for RESTful API (Optional)
-
-experimental: # experimental feature
+experimental:
   ignore-resolve-fail: true # ignore dns resolve fail, default value is true
 
-# authentication of local SOCKS5/HTTP(S) server
-#authentication:
-#  - "user1:pass1"
-#  - "user2:pass2"
-
-# experimental hosts, support wildcard (e.g. *.clash.dev Even *.foo.*.example.com)
-# static domain has a higher priority than wildcard domain (foo.example.com > *.example.com)
 hosts:
   '*.clash.dev': 127.0.0.1
   'alpha.clash.dev': '::1'
   '*.notion.so': '119.28.13.121' #notion
 
 dns:
-  enable: true # set true to enable dns (default is false)
-  ipv6: false # default is false
+  enable: true
+  ipv6: false
   listen: 0.0.0.0:53
-  enhanced-mode: fake-ip # or redir-host
-  fake-ip-range: 198.18.0.1/16 # if you don't know what it is, don't change it
+  enhanced-mode: fake-ip
+  fake-ip-range: 198.18.0.1/1
   nameserver:
     - https://doh.pub/dns-query
     - https://dns.alidns.com
-  fallback: # concurrent request with nameserver, fallback used when GEOIP country isn't CN
+  fallback:
     - https://8.8.8.8/dns-query
     - https://1.1.1.1/dns-query
   fallback-filter:
-    geoip: true # default
-    ipcidr: # ips in these subnets will be considered polluted
+    geoip: true
+    ipcidr:
       - 240.0.0.0/4 
 sniffer:
   enable: true
@@ -81,15 +55,15 @@ proxy-providers:
       url: http://www.gstatic.com/generate_204
       interval: 3600 # 检测间隔
 
-  sub2: #组名
-    type: http # url订阅的方式
-    path: ./profiles/sub2.yml # 配置文件缓存的位置
-    url:   # 网络上配置文件的位置
-    interval: 86400 # 自动更新时间
-    health-check: # 健康检测，检测失败就不会在自动选择中用该组代理
+  sub2:
+    type: http
+    path: ./profiles/sub2.yml
+    url: 
+    interval: 86400
+    health-check:
       enable: true
       url: http://www.gstatic.com/generate_204
-      interval: 3600 # 检测间隔
+      interval: 3600
 
 proxy-groups:
 - name: "🗺海外流量"
@@ -366,19 +340,18 @@ geox-url:
   mmdb: "https://fastly.jsdelivr.net/gh/MetaCubeX/meta-rules-dat@release/country.mmdb"
 
 rule-providers:
+  Direct:
+    type: http
+    behavior: classical
+    url: "https://cdn.jsdelivr.net/gh/blackmatrix7/ios_rule_script@master/rule/Clash/Direct/Direct.yaml"
+    path: ./ruleset/Direct.yaml
+    interval: 86400
   #广告域名
   Advertising_Classical:
     type: http
     behavior: classical
     url: "https://cdn.jsdelivr.net/gh/blackmatrix7/ios_rule_script@master/rule/Clash/Advertising/Advertising_Classical.yaml"
     path: ./ruleset/Advertising_Classical.yaml
-    interval: 86400
-
-  Advertising_Domain:
-    type: http
-    behavior: domain
-    url: "https://cdn.jsdelivr.net/gh/blackmatrix7/ios_rule_script@master/rule/Clash/Advertising/Advertising_Domain_For_Clash.txt"
-    path: ./ruleset/Advertising_Domain.yaml
     interval: 86400
   
   AdGuardSDNSFilter_Direct:
@@ -388,23 +361,16 @@ rule-providers:
     path: ./ruleset/AdGuardSDNSFilter_Direct.yaml
     interval: 86400
 
-  AdGuardSDNSFilter:
+  AdGuardSDNSFilter_Classical:
     type: http
     behavior: classical
-    url: "https://cdn.jsdelivr.net/gh/blackmatrix7/ios_rule_script@master/rule/Clash/AdGuardSDNSFilter/AdGuardSDNSFilter.yaml"
-    path: ./ruleset/AdGuardSDNSFilter.yaml
-    interval: 86400
-
-  AdGuardSDNSFilter_Domain:
-    type: http
-    behavior: domain
-    url: "https://cdn.jsdelivr.net/gh/blackmatrix7/ios_rule_script@master/rule/Clash/AdGuardSDNSFilter/AdGuardSDNSFilter_Domain_For_Clash.txt"
-    path: ./ruleset/AdGuardSDNSFilter_Domain.yaml
+    url: "https://raw.githubusercontent.com/blackmatrix7/ios_rule_script/master/rule/Clash/AdGuardSDNSFilter/AdGuardSDNSFilter_Classical.yaml"
+    path: ./ruleset/AdGuardSDNSFilter_Classical.yaml
     interval: 86400
 
   BlockHttpDNS:
     type: http
-    behavior: domain
+    behavior: classical
     url: "https://cdn.jsdelivr.net/gh/blackmatrix7/ios_rule_script@master/rule/Clash/BlockHttpDNS/BlockHttpDNS.yaml"
     path: ./ruleset/BlockHttpDNS.yaml
     interval: 86400
@@ -433,22 +399,8 @@ rule-providers:
   ChinaMax:
     type: http
     behavior: classical
-    url: "https://cdn.jsdelivr.net/gh/blackmatrix7/ios_rule_script@master/rule/Clash/ChinaMax/ChinaMax.yaml"
+    url: "https://cdn.jsdelivr.net/gh/blackmatrix7/ios_rule_script@master/rule/Clash/ChinaMax/ChinaMax_Classical.yaml"
     path: ./ruleset/ChinaMax.yaml
-    interval: 86400
-
-  ChinaMax_Domain:
-    type: http
-    behavior: domain
-    url: "https://cdn.jsdelivr.net/gh/blackmatrix7/ios_rule_script@master/rule/Clash/ChinaMax/ChinaMax_Domain_For_Clash.txt"
-    path: ./ruleset/ChinaMax_Domain.yaml
-    interval: 86400
-
-  ChinaMax_IP:
-    type: http
-    behavior: ipcidr
-    url: "https://cdn.jsdelivr.net/gh/blackmatrix7/ios_rule_script@master/rule/Clash/ChinaMax/ChinaMax_IP.txt"
-    path: ./ruleset/ChinaMax_IP.yaml
     interval: 86400
 
   applications: #需要直连的常见软件
@@ -464,13 +416,6 @@ rule-providers:
     behavior: classical
     url: "https://cdn.jsdelivr.net/gh/blackmatrix7/ios_rule_script@master/rule/Clash/Google/Google.yaml"
     path: ./ruleset/Google.yaml
-    interval: 86400
-
-  Apple_Domain:
-    type: http
-    behavior: domain
-    url: "https://cdn.jsdelivr.net/gh/blackmatrix7/ios_rule_script@master/rule/Clash/Apple/Apple_Domain_For_Clash.txt"
-    path: ./ruleset/Apple_Domain.yaml
     interval: 86400
 
   Apple:
@@ -573,7 +518,7 @@ rule-providers:
 
   GameDownloadCN:
     type: http
-    behavior: classical
+    behavior: domain
     url: "https://cdn.jsdelivr.net/gh/blackmatrix7/ios_rule_script@master/rule/Clash/Game/GameDownloadCN/GameDownloadCN.yaml"
     path: ./ruleset/GameDownloadCN.yaml
     interval: 86400
@@ -621,12 +566,13 @@ rule-providers:
     interval: 86400
 
 rules:
+  - RULE-SET,private,DIRECT #私有网络
+  - RULE-SET,lancidr,DIRECT #局域网 IP 及保留 IP 地址列表
+  - RULE-SET,Direct,DIRECT
   #广告域名
   - RULE-SET,Advertising_Classical,广告拦截
-  - RULE-SET,Advertising_Domain,广告拦截
   - RULE-SET,AdGuardSDNSFilter_Direct,DIRECT
-  - RULE-SET,AdGuardSDNSFilter,广告拦截
-  - RULE-SET,AdGuardSDNSFilter_Domain,广告拦截
+  - RULE-SET,AdGuardSDNSFilter_Classical,广告拦截
   - RULE-SET,BlockHttpDNS,广告拦截
 
   #个人偏好
@@ -642,7 +588,6 @@ rules:
   #Notion
   - DOMAIN-SUFFIX,notion.so,DIRECT
   #Apple
-  - RULE-SET,Apple_Domain,Apple
   - RULE-SET,Apple,Apple
   #Google
   - RULE-SET,Google,Google
@@ -676,10 +621,7 @@ rules:
   - RULE-SET,Game,Game
   - RULE-SET,GameDownloadCN,DIRECT #游戏下载
 
-  - RULE-SET,private,DIRECT #私有网络
-  - RULE-SET,lancidr,DIRECT #局域网 IP 及保留 IP 地址列表
   - RULE-SET,ChinaMax,DIRECT
-  - RULE-SET,ChinaMax_Domain,DIRECT
-  - RULE-SET,ChinaMax_IP,DIRECT
   - RULE-SET,applications,DIRECT #需要直连的常见软件
+  - GEOIP,CN,DIRECT
   - MATCH,其他
