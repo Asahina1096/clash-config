@@ -37,6 +37,11 @@ experimental: # experimental feature
 hosts:
   '*.clash.dev': 127.0.0.1
   'alpha.clash.dev': '::1'
+  '*.notion.so': '119.28.13.121' #notion
+  #Github
+  'raw.githubusercontent.com': 'https://ghproxy.com/raw.githubusercontent.com'
+  'gist.github.com': 'https://ghproxy.com/gist.github.com'
+  'gist.githubusercontent.com': 'https://ghproxy.com/gist.githubusercontent.com'
 
 dns:
   enable: true # set true to enable dns (default is false)
@@ -87,7 +92,8 @@ proxy-groups:
   type: select
   proxies:
     - "auto"
-    - "fallback-auto"
+    - "手动选择1"
+    - "手动选择2"
     - "🇭🇰香港"
     - "🇹🇼台湾"
     - "🇯🇵日本"
@@ -100,10 +106,62 @@ proxy-groups:
   tolerance: 50
   <<: *use
 
-# fallback select an available policy by priority. The availability is tested by accessing an URL, just like an auto url-test group.
-- name: "fallback-auto"
-  type: fallback
+- name: "手动选择1"
+  type: select
+  tolerance: 50
   <<: *use
+
+- name: "手动选择2"
+  type: select
+  tolerance: 50
+  <<: *use
+
+#代理地区
+- name: "🇭🇰香港"
+  type: load-balance
+  <<: *use
+  filter: "(?i)港|hk|hongkong|hong kong"
+  strategy: consistent-hashing
+
+- name: "🇹🇼台湾"
+  type: load-balance
+  <<: *use
+  filter: "(?i)台|tw|taiwan"
+  strategy: consistent-hashing
+
+- name: "🇯🇵日本"
+  type: load-balance
+  <<: *use
+  filter: "(?i)🇯🇵日本|jp|japan"
+  strategy: consistent-hashing
+
+- name: "🇺🇸美国"
+  type: load-balance
+  <<: *use
+  filter: "(?i)美|us|unitedstates|united states"
+  strategy: consistent-hashing
+
+- name: "🇬🇧英国"
+  type: load-balance
+  <<: *use
+  filter: "(?i)英|uk|unitedkingdom|united kingdom"
+  strategy: consistent-hashing
+
+- name: "🇸🇬新加坡"
+  type: load-balance
+  <<: *use
+  filter: "(?i)(新|sg|singapore)"
+  strategy: consistent-hashing
+
+- name: "🇰🇷韩国"
+  type: load-balance
+  <<: *use
+  filter: "(?i)(韩|kr|korea)"
+  strategy: consistent-hashing
+
+- name: "其它地区"
+  <<: *use
+  exclude-filter: "(?i)港|hk|hongkong|hong kong|台|tw|taiwan|🇯🇵日本|jp|japan|美|us|unitedstates|united states|新|sg|singapore|韩|kr|korea|英|uk|unitedkingdom|united kingdom"
 
 - name: "Google"
   type: select
@@ -117,6 +175,8 @@ proxy-groups:
     - "🇰🇷韩国"
     - "🇬🇧英国"
     - "其它地区"
+    - "手动选择1"
+    - "手动选择2"
 
 - name: "Microsoft"
   type: select
@@ -130,11 +190,14 @@ proxy-groups:
     - "🇰🇷韩国"
     - "🇬🇧英国"
     - "其它地区"
+    - "手动选择1"
+    - "手动选择2"
     - DIRECT
 
 - name: "Apple"
   type: select
   proxies:
+    - DIRECT
     - "🗺海外流量"
     - "🇭🇰香港"
     - "🇹🇼台湾"
@@ -144,7 +207,8 @@ proxy-groups:
     - "🇰🇷韩国"
     - "🇬🇧英国"
     - "其它地区"
-    - DIRECT
+    - "手动选择1"
+    - "手动选择2"
 
 - name: "OpenAI"
   type: select
@@ -158,10 +222,13 @@ proxy-groups:
     - "🇰🇷韩国"
     - "🇬🇧英国"
     - "其它地区"
+    - "手动选择1"
+    - "手动选择2"
 
 - name: "Game"
   type: select
   proxies:
+    - DIRECT
     - "🗺海外流量"
     - "🇭🇰香港"
     - "🇹🇼台湾"
@@ -171,7 +238,8 @@ proxy-groups:
     - "🇰🇷韩国"
     - "🇬🇧英国"
     - "其它地区"
-    - DIRECT
+    - "手动选择1"
+    - "手动选择2"
 
 - name: "Telegram"
   type: select
@@ -185,6 +253,8 @@ proxy-groups:
     - "🇰🇷韩国"
     - "🇬🇧英国"
     - "其它地区"
+    - "手动选择1"
+    - "手动选择2"
 
 - name: "Twitter"
   type: select
@@ -198,6 +268,8 @@ proxy-groups:
     - "🇰🇷韩国"
     - "🇬🇧英国"
     - "其它地区"
+    - "手动选择1"
+    - "手动选择2"
 
 - name: "YouTube"
   type: select
@@ -211,6 +283,9 @@ proxy-groups:
     - "🇰🇷韩国"
     - "🇬🇧英国"
     - "其它地区"
+    - "手动选择1"
+    - "手动选择2"
+
 
 - name: "海外流媒体"
   type: select
@@ -224,52 +299,53 @@ proxy-groups:
     - "🇰🇷韩国"
     - "🇬🇧英国"
     - "其它地区"
+    - "手动选择1"
+    - "手动选择2"
+
+- name: "哔哩哔哩"
+  type: select
+  proxies:
+    - DIRECT
+  <<: *use
+  filter: "(?i)港|hk|hongkong|hong kong"
 
 - name: "巴哈姆特"
   type: select
   <<: *use
   filter: "(?i)台|tw|taiwan"
 
+- name: "Pixiv"
+  type: select
+  <<: *use
+  filter: "(?i)🇯🇵日本|jp|japan"
+
+- name: "ehentai"
+  type: select
+  proxies:
+    - "🗺海外流量"
+    - "🇭🇰香港"
+    - "🇹🇼台湾"
+    - "🇺🇸美国"
+    - "🇸🇬新加坡"
+    - "🇰🇷韩国"
+    - "🇬🇧英国"
+    - "其它地区"
+    - "手动选择1"
+    - "手动选择2"
+
+- name: "广告拦截"
+  type: select
+  proxies:
+    - REJECT
+    - DIRECT
+
 - name: "其他"
   type: select
   proxies:
     - "🗺海外流量"
+    - "手动选择1"
+    - "手动选择2"
     - DIRECT
-    - REJECT
-
-#代理地区
-- name: "🇭🇰香港"
-  type: select
-  <<: *use
-  filter: "(?i)港|hk|hongkong|hong kong"
-
-- name: "🇹🇼台湾"
-  <<: *use
-  filter: "(?i)台|tw|taiwan"
-
-- name: "🇯🇵日本"
-  <<: *use
-  filter: "(?i)🇯🇵日本|jp|japan"
-
-- name: "🇺🇸美国"
-  <<: *use
-  filter: "(?i)美|us|unitedstates|united states"
-
-- name: "🇬🇧英国"
-  <<: *use
-  filter: "(?i)英|uk|unitedkingdom|united kingdom"
-
-- name: "🇸🇬新加坡"
-  <<: *use
-  filter: "(?i)(新|sg|singapore)"
-
-- name: "🇰🇷韩国"
-  <<: *use
-  filter: "(?i)(韩|kr|korea)"
-
-- name: "其它地区"
-  <<: *use
-  exclude-filter: "(?i)港|hk|hongkong|hong kong|台|tw|taiwan|🇯🇵日本|jp|japan|美|us|unitedstates|united states|新|sg|singapore|韩|kr|korea|英|uk|unitedkingdom|united kingdom"
 
 geodata-mode: true
 geox-url:
@@ -278,296 +354,305 @@ geox-url:
   mmdb: "https://fastly.jsdelivr.net/gh/MetaCubeX/meta-rules-dat@release/country.mmdb"
 
 rule-providers:
-  reject: #广告域名
+  #广告域名
+  Advertising_Classical:
+    type: http
+    behavior: classical
+    url: "https://cdn.jsdelivr.net/gh/blackmatrix7/ios_rule_script@master/rule/Clash/Advertising/Advertising_Classical.yaml"
+    path: ./ruleset/Advertising_Classical.yaml
+    interval: 86400
+
+  Advertising_Domain:
     type: http
     behavior: domain
-    url: "https://ghproxy.com/https://raw.githubusercontent.com/Loyalsoldier/clash-rules/release/reject.txt"
-    path: ./ruleset/reject.yaml
+    url: "https://cdn.jsdelivr.net/gh/blackmatrix7/ios_rule_script@master/rule/Clash/Advertising/Advertising_Domain_For_Clash.txt"
+    path: ./ruleset/Advertising_Domain.yaml
+    interval: 86400
+  
+  AdGuardSDNSFilter_Direct:
+    type: http
+    behavior: classical
+    url: "https://cdn.jsdelivr.net/gh/blackmatrix7/ios_rule_script@master/rule/Clash/AdGuardSDNSFilter/Direct/Direct.yaml"
+    path: ./ruleset/AdGuardSDNSFilter_Direct.yaml
+    interval: 86400
+
+  AdGuardSDNSFilter:
+    type: http
+    behavior: classical
+    url: "https://cdn.jsdelivr.net/gh/blackmatrix7/ios_rule_script@master/rule/Clash/AdGuardSDNSFilter/AdGuardSDNSFilter.yaml"
+    path: ./ruleset/AdGuardSDNSFilter.yaml
+    interval: 86400
+
+  AdGuardSDNSFilter_Domain:
+    type: http
+    behavior: domain
+    url: "https://cdn.jsdelivr.net/gh/blackmatrix7/ios_rule_script@master/rule/Clash/AdGuardSDNSFilter/AdGuardSDNSFilter_Domain_For_Clash.txt"
+    path: ./ruleset/AdGuardSDNSFilter_Domain.yaml
+    interval: 86400
+
+  BlockHttpDNS:
+    type: http
+    behavior: domain
+    url: "https://cdn.jsdelivr.net/gh/blackmatrix7/ios_rule_script@master/rule/Clash/BlockHttpDNS/BlockHttpDNS.yaml"
+    path: ./ruleset/BlockHttpDNS.yaml
+    interval: 86400
+
+  Marketing: #思杰马克丁软件
+    type: http
+    behavior: classical
+    url: "https://cdn.jsdelivr.net/gh/blackmatrix7/ios_rule_script@master/rule/Clash/Marketing/Marketing.yaml"
+    path: ./ruleset/Marketing.yaml
     interval: 86400
     
   private: #私有网络
     type: http
     behavior: domain
-    url: "https://ghproxy.com/https://raw.githubusercontent.com/Loyalsoldier/clash-rules/release/private.txt"
+    url: "https://cdn.jsdelivr.net/gh/Loyalsoldier/clash-rules@release/private.txt"
     path: ./ruleset/private.yaml
-    interval: 86400
-
-  direct: #直连域名
-    type: http
-    behavior: domain
-    url: "https://ghproxy.com/https://raw.githubusercontent.com/Loyalsoldier/clash-rules/release/direct.txt"
-    path: ./ruleset/direct.yaml
-    interval: 86400
-
-  applications: #需要直连的常见软件
-    type: http
-    behavior: classical
-    url: "https://ghproxy.com/https://raw.githubusercontent.com/Loyalsoldier/clash-rules/release/applications.txt"
-    path: ./ruleset/applications.yaml
     interval: 86400
 
   lancidr: #局域网 IP 及保留 IP 地址列表
     type: http
     behavior: ipcidr
-    url: "https://ghproxy.com/https://raw.githubusercontent.com/Loyalsoldier/clash-rules/release/lancidr.txt"
+    url: "https://cdn.jsdelivr.net/gh/Loyalsoldier/clash-rules@release/lancidr.txt"
     path: ./ruleset/lancidr.yaml
     interval: 86400
 
-  cncidr: #中国大陆 IP 地址
+  ChinaMax:
+    type: http
+    behavior: classical
+    url: "https://cdn.jsdelivr.net/gh/blackmatrix7/ios_rule_script@master/rule/Clash/ChinaMax/ChinaMax.yaml"
+    path: ./ruleset/ChinaMax.yaml
+    interval: 86400
+
+  ChinaMax_Domain:
+    type: http
+    behavior: domain
+    url: "https://cdn.jsdelivr.net/gh/blackmatrix7/ios_rule_script@master/rule/Clash/ChinaMax/ChinaMax_Domain_For_Clash.txt"
+    path: ./ruleset/ChinaMax_Domain.yaml
+    interval: 86400
+
+  ChinaMax_IP:
     type: http
     behavior: ipcidr
-    url: "https://ghproxy.com/https://raw.githubusercontent.com/Loyalsoldier/clash-rules/release/cncidr.txt"
-    path: ./ruleset/cncidr.yaml
+    url: "https://cdn.jsdelivr.net/gh/blackmatrix7/ios_rule_script@master/rule/Clash/ChinaMax/ChinaMax_IP.txt"
+    path: ./ruleset/ChinaMax_IP.yaml
+    interval: 86400
+
+  applications: #需要直连的常见软件
+    type: http
+    behavior: classical
+    url: "https://cdn.jsdelivr.net/gh/Loyalsoldier/clash-rules@release/applications.txt"
+    path: ./ruleset/applications.yaml
+    interval: 86400
+
+#海外服务
+  Google: 
+    type: http
+    behavior: classical
+    url: "https://cdn.jsdelivr.net/gh/blackmatrix7/ios_rule_script@master/rule/Clash/Google/Google.yaml"
+    path: ./ruleset/Google.yaml
+    interval: 86400
+
+  Apple_Domain:
+    type: http
+    behavior: domain
+    url: "https://cdn.jsdelivr.net/gh/blackmatrix7/ios_rule_script@master/rule/Clash/Apple/Apple_Domain_For_Clash.txt"
+    path: ./ruleset/Apple_Domain.yaml
+    interval: 86400
+
+  Apple:
+    type: http
+    behavior: classical
+    url: "https://cdn.jsdelivr.net/gh/blackmatrix7/ios_rule_script@master/rule/Clash/Apple/Apple_Classical.yaml"
+    path: ./ruleset/Apple.yaml
+    interval: 86400
+
+  Microsoft:
+    type: http
+    behavior: classical
+    url: "https://cdn.jsdelivr.net/gh/blackmatrix7/ios_rule_script@master/rule/Clash/Microsoft/Microsoft.yaml"
+    path: ./ruleset/Microsoft.yaml
+    interval: 86400
+
+  Bing:
+    type: http
+    behavior: classical
+    url: "https://cdn.jsdelivr.net/gh/blackmatrix7/ios_rule_script@master/rule/Clash/Bing/Bing.yaml"
+    path: ./ruleset/Bing.yaml
+    interval: 86400
+
+  OpenAI:
+    type: http
+    behavior: classical
+    url: "https://cdn.jsdelivr.net/gh/blackmatrix7/ios_rule_script@master/rule/Clash/OpenAI/OpenAI.yaml"
+    path: ./ruleset/OpenAI.yaml
+    interval: 86400
+
+  YouTube:
+    type: http
+    behavior: classical
+    url: "https://cdn.jsdelivr.net/gh/blackmatrix7/ios_rule_script@master/rule/Clash/YouTube/YouTube.yaml"
+    path: ./ruleset/YouTube.yaml
+    interval: 86400
+
+  YouTubeMusic:
+    type: http
+    behavior: classical
+    url: "https://cdn.jsdelivr.net/gh/blackmatrix7/ios_rule_script@master/rule/Clash/YouTubeMusic/YouTubeMusic.yaml"
+    path: ./ruleset/YouTubeMusic.yaml
+    interval: 86400
+
+  Netflix:
+    type: http
+    behavior: classical
+    url: "https://cdn.jsdelivr.net/gh/blackmatrix7/ios_rule_script@master/rule/Clash/Netflix/Netflix.yaml"
+    path: ./ruleset/Netflix.yaml
+    interval: 86400
+
+  Netflix_IP:
+    type: http
+    behavior: ipcidr
+    url: "https://cdn.jsdelivr.net/gh/blackmatrix7/ios_rule_script@master/rule/Clash/Netflix/Netflix_IP.yaml"
+    path: ./ruleset/Netflix_IP.yaml
+    interval: 86400
+
+  Discovery:
+    type: http
+    behavior: classical
+    url: "https://cdn.jsdelivr.net/gh/blackmatrix7/ios_rule_script@master/rule/Clash/Disney/Disney.yaml"
+    path: ./ruleset/Discovery.yaml
+    interval: 86400
+
+  Hulu:
+    type: http
+    behavior: classical
+    url: "https://cdn.jsdelivr.net/gh/blackmatrix7/ios_rule_script@master/rule/Clash/Hulu/Hulu.yaml"
+    path: ./ruleset/Hulu.yaml
+    interval: 86400
+
+  HBO:
+    type: http
+    behavior: classical
+    url: "https://cdn.jsdelivr.net/gh/blackmatrix7/ios_rule_script@master/rule/Clash/HBO/HBO.yaml"
+    path: ./ruleset/HBO.yaml
+    interval: 86400
+
+  Pandora:
+    type: http
+    behavior: classical
+    url: "https://cdn.jsdelivr.net/gh/blackmatrix7/ios_rule_script@master/rule/Clash/Pandora/Pandora.yaml"
+    path: ./ruleset/Pandora.yaml
+    interval: 86400
+
+  Bahamut:
+    type: http
+    behavior: classical
+    url: "https://cdn.jsdelivr.net/gh/blackmatrix7/ios_rule_script@master/rule/Clash/Bahamut/Bahamut.yaml"
+    path: ./ruleset/Bahamut.yaml
+    interval: 86400
+
+  Game:
+    type: http
+    behavior: classical
+    url: "https://cdn.jsdelivr.net/gh/blackmatrix7/ios_rule_script@master/rule/Clash/Game/Game.yaml"
+    path: ./ruleset/Game.yaml
+    interval: 86400
+
+  GameDownloadCN:
+    type: http
+    behavior: classical
+    url: "https://cdn.jsdelivr.net/gh/blackmatrix7/ios_rule_script@master/rule/Clash/Game/GameDownloadCN/GameDownloadCN.yaml"
+    path: ./ruleset/GameDownloadCN.yaml
+    interval: 86400
+
+  Telegram:
+    type: http
+    behavior: classical
+    url: "https://cdn.jsdelivr.net/gh/blackmatrix7/ios_rule_script@master/rule/Clash/Telegram/Telegram.yaml"
+    path: ./ruleset/Telegram.yaml
+    interval: 86400
+
+  Twitter:
+    type: http
+    behavior: classical
+    url: "https://cdn.jsdelivr.net/gh/blackmatrix7/ios_rule_script@master/rule/Clash/Twitter/Twitter.yaml"
+    path: ./ruleset/Twitter.yaml
+    interval: 86400
+
+  Pixiv:
+    type: http
+    behavior: classical
+    url: "https://cdn.jsdelivr.net/gh/blackmatrix7/ios_rule_script@master/rule/Clash/Pixiv/Pixiv.yaml"
+    path: ./ruleset/Pixiv.yaml
+    interval: 86400
+
+  BiliBili:
+    type: http
+    behavior: classical
+    url: "https://cdn.jsdelivr.net/gh/blackmatrix7/ios_rule_script@master/rule/Clash/BiliBili/BiliBili.yaml"
+    path: ./ruleset/BiliBili.yaml
     interval: 86400
 
 rules:
-  - RULE-SET,reject,REJECT #广告域名
-  - GEOSITE,category-ads-all,REJECT
+  #广告域名
+  - RULE-SET,Advertising_Classical,广告拦截
+  - RULE-SET,Advertising_Domain,广告拦截T
+  - RULE-SET,AdGuardSDNSFilter_Direct,DIRECT
+  - RULE-SET,AdGuardSDNSFilter,广告拦截
+  - RULE-SET,AdGuardSDNSFilter_Domain,广告拦截
+  - RULE-SET,BlockHttpDNS,广告拦截
+
+  #个人偏好
+  - RULE-SET,Marketing,广告拦截
+
+  #偷渡
+  - RULE-SET,BiliBili,哔哩哔哩
 
   #国外服务
+  - GEOSITE,ehentai,ehentai #ehentai
+  - RULE-SET,Pixiv,Pixiv #Pixiv
+  #Notion
+  - DOMAIN-SUFFIX,notion.so,DIRECT
+  #Apple
+  - RULE-SET,Apple_Domain,Apple
+  - RULE-SET,Apple,Apple
   #Google
-  - GEOSITE,google,Google
-  - GEOIP,google,Google
+  - RULE-SET,Google,Google
   #Telegram
-  - GEOSITE,telegram,Telegram
-  - GEOIP,telegram,Telegram
+  - RULE-SET,Telegram,Telegram
   #Twitter
-  - GEOSITE,twitter,Twitter
-  - GEOIP,twitter,Twitter
-  # Apple
-  - DOMAIN-KEYWORD,apple.com.akadns.net,Apple
-  - DOMAIN-KEYWORD,icloud.com.akadns.net,Apple
-  - DOMAIN-SUFFIX,aaplimg.com,Apple
-  - DOMAIN-SUFFIX,apple.co,Apple
-  - DOMAIN-SUFFIX,apple.com,Apple
-  - DOMAIN-SUFFIX,apple-cloudkit.com,Apple
-  - DOMAIN-SUFFIX,apple-mapkit.com,Apple
-  - DOMAIN-SUFFIX,appsto.re,Apple
-  - DOMAIN-SUFFIX,cdn-apple.com,Apple
-  - DOMAIN-SUFFIX,icloud.com,Apple
-  - DOMAIN-SUFFIX,icloud-content.com,Apple
-  - DOMAIN-SUFFIX,itunes.com,Apple
-  - DOMAIN-SUFFIX,me.com,Apple
-  - DOMAIN-SUFFIX,mzstatic.com,Apple
-  - DOMAIN-SUFFIX,apple.news,Apple
-  - IP-CIDR,17.0.0.0/8,Apple,no-resolve
-  - IP-CIDR,63.92.224.0/19,Apple,no-resolve
-  - IP-CIDR,65.199.22.0/23,Apple,no-resolve
-  - IP-CIDR,139.178.128.0/18,Apple,no-resolve
-  - IP-CIDR,144.178.0.0/19,Apple,no-resolve
-  - IP-CIDR,144.178.36.0/22,Apple,no-resolve
-  - IP-CIDR,144.178.48.0/20,Apple,no-resolve
-  - IP-CIDR,192.35.50.0/24,Apple,no-resolve
-  - IP-CIDR,198.183.17.0/24,Apple,no-resolve
-  - IP-CIDR,205.180.175.0/24,Apple,no-resolve
+  - RULE-SET,Twitter,Twitter
   # OpenAI (ChatGPT)
-  - DOMAIN-SUFFIX,chat.openai.com,OpenAI
-  - DOMAIN-SUFFIX,auth0.openai.com,OpenAI
-  - DOMAIN-SUFFIX,cdn.openai.com,OpenAI
-  - DOMAIN-SUFFIX,openai.com,OpenAI
-  - DOMAIN-SUFFIX,client.crisp.chat,OpenAI
+  - RULE-SET,OpenAI,OpenAI
   # Microsoft
-  - DOMAIN-KEYWORD,microsoft,Microsoft
-  - DOMAIN-KEYWORD,azure,Microsoft
-  - DOMAIN-KEYWORD,biying,Microsoft
-  - DOMAIN-KEYWORD,office365,Microsoft
-  - DOMAIN-KEYWORD,onedrive,Microsoft
-  - DOMAIN-KEYWORD,xbox,Microsoft
-  - DOMAIN-KEYWORD,windows,Microsoft
-  - DOMAIN-KEYWORD,windowsupdate,Microsoft
-  - DOMAIN-KEYWORD,hotmail,Microsoft
-  - DOMAIN-KEYWORD,onecollector,Microsoft
-  - DOMAIN-KEYWORD,optimizely,Microsoft
-  - DOMAIN-KEYWORD,outlook,Microsoft
-  - DOMAIN-KEYWORD,microsoft365,Microsoft
-  - DOMAIN-SUFFIX,gamepass.com,Microsoft
-  - DOMAIN-SUFFIX,assets-yammer.com,Microsoft
-  - DOMAIN-SUFFIX,footprintdns.com,Microsoft
-  - DOMAIN-SUFFIX,storage.live.com,Microsoft
-  - DOMAIN-SUFFIX,microsoft.com,Microsoft
-  - DOMAIN-SUFFIX,microsoftonline-p.com,Microsoft
-  - DOMAIN-SUFFIX,microsoftonline.com,Microsoft
-  - DOMAIN-SUFFIX,msxiaoice.com,Microsoft
-  - DOMAIN-SUFFIX,msxiaona.cn,Microsoft
-  - DOMAIN-SUFFIX,windows.com,Microsoft
-  - DOMAIN-SUFFIX,bi.ng,Microsoft
-  - DOMAIN-SUFFIX,msxiaobing.com,Microsoft
-  - DOMAIN-SUFFIX,bing.com,Microsoft
-  - DOMAIN-SUFFIX,bing123.com,Microsoft
-  - DOMAIN-SUFFIX,bing135.com,Microsoft
-  - DOMAIN-SUFFIX,bing4.com,Microsoft
-  - DOMAIN-SUFFIX,bing.com.bo,Microsoft
-  - DOMAIN-SUFFIX,bing.com.co,Microsoft
-  - DOMAIN-SUFFIX,bing.com.cy,Microsoft
-  - DOMAIN-SUFFIX,bing.com.gt,Microsoft
-  - DOMAIN-SUFFIX,bing.jp,Microsoft
-  - DOMAIN-SUFFIX,bing.cn,Microsoft
-  - DOMAIN-SUFFIX,bing.net,Microsoft
-  - DOMAIN-SUFFIX,bingapis.com,Microsoft
-  - DOMAIN-SUFFIX,bingforbusiness.com,Microsoft
-  - DOMAIN-SUFFIX,office365love.com,Microsoft
-  - DOMAIN-SUFFIX,office365tw.com,Microsoft
-  - DOMAIN-SUFFIX,osdinfra.net,Microsoft
-  - DOMAIN-SUFFIX,renovacionoffice.com,Microsoft
-  - DOMAIN-SUFFIX,sprinklesapp.com,Microsoft
-  - DOMAIN-SUFFIX,1drv.com,Microsoft
-  - DOMAIN-SUFFIX,1drv.ms,Microsoft
-  - DOMAIN-SUFFIX,livefilestore.com,Microsoft
-  - DOMAIN-SUFFIX,msdn.com,Microsoft
-  - DOMAIN-SUFFIX,msn.cn,Microsoft
-  - DOMAIN-SUFFIX,msn.com,Microsoft
-  - DOMAIN-SUFFIX,msn.com.cn,Microsoft
-  - DOMAIN-SUFFIX,msn.com.nsatc.net,Microsoft
-  - DOMAIN-SUFFIX,msn.com.tw,Microsoft
-  - DOMAIN-SUFFIX,msocdn.com,Microsoft
-  - DOMAIN-SUFFIX,msocsp.com,Microsoft
-  - DOMAIN-SUFFIX,bibg.com,Microsoft
-  - DOMAIN-SUFFIX,biing.com,Microsoft
-  - DOMAIN-SUFFIX,xbox360.com,Microsoft
-  - DOMAIN-SUFFIX,cloudapp.net,Microsoft
-  - DOMAIN-SUFFIX,cloudappsecurity.com,Microsoft
-  - DOMAIN-SUFFIX,centralvalidation.com,Microsoft
-  - DOMAIN-SUFFIX,ch9.ms,Microsoft
-  - DOMAIN-SUFFIX,charticulator.com,Microsoft
-  - DOMAIN-SUFFIX,live.com,Microsoft
-  - DOMAIN-SUFFIX,live.com.au,Microsoft
-  - DOMAIN-SUFFIX,live.eu,Microsoft
-  - DOMAIN-SUFFIX,live.net,Microsoft
-  - DOMAIN-SUFFIX,office.com,Microsoft
-  - DOMAIN-SUFFIX,office.de,Microsoft
-  - DOMAIN-SUFFIX,office.net,Microsoft
-  - DOMAIN-SUFFIX,office.microsoft,Microsoft
-  - DOMAIN-SUFFIX,office365.com,Microsoft
-  - DOMAIN-SUFFIX,office365.us,Microsoft
-  - DOMAIN-SUFFIX,o365filtering.com,Microsoft
-  - DOMAIN-SUFFIX,officedev.cn,Microsoft
-  - DOMAIN-SUFFIX,onmicrosoft.com,Microsoft
-  - DOMAIN-SUFFIX,svc.ms,Microsoft
-  - DOMAIN-SUFFIX,minecraft.net,Microsoft
-  - DOMAIN-SUFFIX,minecraftshop.com,Microsoft
-  - DOMAIN-SUFFIX,mojang.com,Microsoft
-  - DOMAIN-SUFFIX,hummingbird.ms,Microsoft
-  - DOMAIN-SUFFIX,ie10.com,Microsoft
-  - DOMAIN-SUFFIX,ie11.com,Microsoft
-  - DOMAIN-SUFFIX,ie8.co,Microsoft
-  - DOMAIN-SUFFIX,ie9.com,Microsoft
-  - DOMAIN-SUFFIX,imaginecup.pl,Microsoft
-  - DOMAIN-SUFFIX,img-prod-cms-rt-microsoft-com,Microsoft
-  - DOMAIN-SUFFIX,internetexplorer.co,Microsoft
-  - DOMAIN-SUFFIX,internetexplorer.com,Microsoft
-  - DOMAIN-SUFFIX,intunewiki.com,Microsoft
-  - DOMAIN-SUFFIX,iotinactionevents.com,Microsoft
-  - DOMAIN-SUFFIX,joinms.com,Microsoft
-  - DOMAIN-SUFFIX,joinms.com.cn,Microsoft
-  - DOMAIN-SUFFIX,joinmva.com,Microsoft
-  - DOMAIN-SUFFIX,makecode.org,Microsoft
-  - DOMAIN-SUFFIX,managedmeetingrooms.com,Microsoft
-  - DOMAIN-SUFFIX,meetfasttrack.com,Microsoft
-  - DOMAIN-SUFFIX,meetyourdevices.com,Microsoft
-  - DOMAIN-SUFFIX,mepn.com,Microsoft
-  - DOMAIN-SUFFIX,xboxab.com,Microsoft
-  - DOMAIN-SUFFIX,xboxab.net,Microsoft
-  - DOMAIN-SUFFIX,xboxlive.com,Microsoft
-  - DOMAIN-SUFFIX,xboxservices.com,Microsoft
-  - DOMAIN-SUFFIX,yammer.com,Microsoft
+  - RULE-SET,Microsoft,Microsoft
+  - RULE-SET,Bing,Microsoft
 
   #海外流媒体
-  - GEOSITE,youtube,YouTube
+  - RULE-SET,YouTube,YouTube
+  - RULE-SET,YouTubeMusic,YouTube
   #Netflix
-  - GEOIP,netflix,海外流媒体
-  - DOMAIN-SUFFIX,netflix.com,海外流媒体
-  - DOMAIN-SUFFIX,netflix.net,海外流媒体
-  - DOMAIN-SUFFIX,nflxext.com,海外流媒体
-  - DOMAIN-SUFFIX,nflximg.com,海外流媒体
-  - DOMAIN-SUFFIX,nflximg.net,海外流媒体
-  - DOMAIN-SUFFIX,nflxso.net,海外流媒体
-  - DOMAIN-SUFFIX,nflxvideo.net,海外流媒体
-  - DOMAIN-SUFFIX,netflixdnstest0.com,海外流媒体
-  - DOMAIN-SUFFIX,netflixdnstest1.com,海外流媒体
-  - DOMAIN-SUFFIX,netflixdnstest2.com,海外流媒体
-  - DOMAIN-SUFFIX,netflixdnstest3.com,海外流媒体
-  - DOMAIN-SUFFIX,netflixdnstest4.com,海外流媒体
-  - DOMAIN-SUFFIX,netflixdnstest5.com,海外流媒体
-  - DOMAIN-SUFFIX,netflixdnstest6.com,海外流媒体
-  - DOMAIN-SUFFIX,netflixdnstest7.com,海外流媒体
-  - DOMAIN-SUFFIX,netflixdnstest8.com,海外流媒体
-  - DOMAIN-SUFFIX,netflixdnstest9.com,海外流媒体
-  - DOMAIN-KEYWORD,apiproxy-http,海外流媒体
-  - DOMAIN-KEYWORD,ichnaea-web-,海外流媒体
+  - RULE-SET,Netflix,海外流媒体
+  - RULE-SET,Netflix_IP,海外流媒体,,no-resolve
   # Disney+
-  - DOMAIN,cdn.registerdisney.go.com,海外流媒体
-  - DOMAIN,disney.api.edge.bamgrid.com,海外流媒体
-  - DOMAIN,disney.connections.edge.bamgrid.com,海外流媒体
-  - DOMAIN,disney.content.edge.bamgrid.com,海外流媒体
-  - DOMAIN,disney.playback.edge.bamgrid.com,海外流媒体
-  - DOMAIN,playback-certs.bamgrid.com,海外流媒体
-  - DOMAIN-SUFFIX,disneyplus.com,海外流媒体
-  - DOMAIN-SUFFIX,disney-plus.net,海外流媒体
-  - DOMAIN-SUFFIX,disneystreaming.com,海外流媒体
-  - DOMAIN-SUFFIX,dssott.com,海外流媒体
-  - DOMAIN-SUFFIX,execute-api.us-east-1.amazonaws.com,海外流媒体
-  - DOMAIN-KEYWORD,disney,海外流媒体
+  - RULE-SET,Discovery,海外流媒体
   # Hulu
-  - DOMAIN-SUFFIX,hulu.com,海外流媒体
-  - DOMAIN-SUFFIX,huluad.com,海外流媒体
-  - DOMAIN-SUFFIX,huluim.com,海外流媒体
-  - DOMAIN-SUFFIX,hulumail.com,海外流媒体
-  - DOMAIN-SUFFIX,huluqa.com,海外流媒体
-  - DOMAIN-SUFFIX,hulustream.com,海外流媒体
+  - RULE-SET,Hulu,海外流媒体
   # HBO
-  - DOMAIN-SUFFIX,hbo.com,海外流媒体
-  - DOMAIN-SUFFIX,hbogo.co.th,海外流媒体
-  - DOMAIN-SUFFIX,hbogo.com,海外流媒体
-  - DOMAIN-SUFFIX,hbogo.eu,海外流媒体
-  - DOMAIN-SUFFIX,hbogoasia.id,海外流媒体
-  - DOMAIN-SUFFIX,hbogoasia.ph,海外流媒体
-  - DOMAIN-SUFFIX,hbomax.com,海外流媒体
-  - DOMAIN-SUFFIX,hbomaxcdn.com,海外流媒体
+  - RULE-SET,HBO,海外流媒体
   # Pandora
-  - DOMAIN-SUFFIX,pandora.com,海外流媒体
-  - DOMAIN-SUFFIX,p-cdn.com,海外流媒体
-  - DOMAIN-SUFFIX,p-cdn.us,海外流媒体
+  - RULE-SET,Pandora,海外流媒体
   #巴哈姆特
-  - GEOSITE,bahamut,巴哈姆特
-
-  #海外游戏
-  #Steam
-  - DOMAIN-SUFFIX,fanatical.com,Game
-  - DOMAIN-SUFFIX,humblebundle.com,Game
-  - DOMAIN-SUFFIX,steamcommunity.com,Game
-  - DOMAIN-SUFFIX,steampowered.com,Game
-  - DOMAIN-SUFFIX,steamstatic.com,Game
-  - DOMAIN-SUFFIX,steam-chat.com,Game
-  - DOMAIN-SUFFIX,steamusercontent.com,Game
-  - DOMAIN-SUFFIX,valvesoftware.com,Game
-  - DOMAIN-KEYWORD,steamuserimages,Game
-  - DOMAIN-KEYWORD,steamcontent,Game
-  # Epic-Games
-  - DOMAIN-SUFFIX,epicgames.com,Game
-  - DOMAIN-SUFFIX,epicgames.dev,Game
-  - DOMAIN-SUFFIX,epicgames.net,Game
-  - DOMAIN-SUFFIX,unrealengine.com,Game
-  # GOG
-  - DOMAIN-SUFFIX,gog.com,Game
-  - DOMAIN-SUFFIX,gog-statics.com,Game
-  - DOMAIN-SUFFIX,gogalaxy.com,Game
-  - DOMAIN-SUFFIX,gogcdn.net,Game
-  # Playstation
-  - DOMAIN-SUFFIX,playstation.com,Game
-  - DOMAIN-SUFFIX,playstation.net,Game
-  - DOMAIN-SUFFIX,sonyentertainmentnetwork.com,Game
-  # Rockstar-Games
-  - DOMAIN-SUFFIX,rockstargames,Game
-  - DOMAIN-KEYWORD,rockstar,Game
-  # Ubisoft
-  - DOMAIN-SUFFIX,ubisoft.com,Game
-  - DOMAIN-SUFFIX,ubi.com,Game
-  - DOMAIN-SUFFIX,ubisoft.org,Game
-  - DOMAIN-SUFFIX,ubisoftconnect.com,Game
+  - RULE-SET,Bahamut,巴哈姆特
+  #游戏
+  - RULE-SET,Game,Game
+  - RULE-SET,GameDownloadCN,DIRECT #游戏下载
 
   - RULE-SET,private,DIRECT #私有网络
-  - RULE-SET,direct,DIRECT #直连域名
+  - RULE-SET,lancidrt,DIRECT #局域网 IP 及保留 IP 地址列表
+  - RULE-SET,ChinaMax,DIRECT
+  - RULE-SET,ChinaMax_Domain,DIRECT
+  - RULE-SET,ChinaMax_IP,DIRECT
   - RULE-SET,applications,DIRECT #需要直连的常见软件
-  - RULE-SET,lancidr,DIRECT #局域网 IP 及保留 IP 地址列表
-  - RULE-SET,cncidr,DIRECT #中国大陆 IP 地址
   - MATCH,其他
