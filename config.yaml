@@ -5,38 +5,48 @@ mode: rule
 log-level: info
 external-controller: '127.0.0.1:9090'
 
-experimental:
+experimental: # experimental feature
   ignore-resolve-fail: true # ignore dns resolve fail, default value is true
 
 hosts:
-  '*.clash.dev': 127.0.0.1
+  '*.clash.dev': '127.0.0.1'
   'alpha.clash.dev': '::1'
   '*.notion.so': '119.28.13.121' #notion
 
 dns:
-  enable: true
-  ipv6: false
+  enable: true # set true to enable dns (default is false)
+  ipv6: false # default is false
   listen: 0.0.0.0:53
-  enhanced-mode: fake-ip
-  fake-ip-range: 198.18.0.1/1
+  enhanced-mode: fake-ip # or redir-host
+  fake-ip-range: 198.18.0.1/16 # if you don't know what it is, don't change it
   nameserver:
     - https://doh.pub/dns-query
     - https://dns.alidns.com
-  fallback:
+  fallback: # concurrent request with nameserver, fallback used when GEOIP country isn't CN
     - https://8.8.8.8/dns-query
     - https://1.1.1.1/dns-query
   fallback-filter:
-    geoip: true
-    ipcidr:
+    geoip: true # default
+    ipcidr: # ips in these subnets will be considered polluted
       - 240.0.0.0/4 
+
 sniffer:
-  enable: true
+  enable: false
+  force-dns-mapping: true
+  parse-pure-ip: true
+  override-destination: false
   sniff:
-    TLS:
-      ports: [443, 8443]
     HTTP:
       ports: [80, 8080-8880]
       override-destination: true
+    TLS:
+      ports: [443, 8443]
+    QUIC:
+      ports: [443, 8443]
+  force-domain:
+    - +.v2ex.com
+  skip-domain:
+    - Mijia Cloud
 
 use: &use
   type: select
@@ -55,282 +65,395 @@ proxy-providers:
       url: http://www.gstatic.com/generate_204
       interval: 3600 # 检测间隔
 
-  sub2:
-    type: http
-    path: ./profiles/sub2.yml
-    url: 
-    interval: 86400
-    health-check:
+  sub2: #组名
+    type: http # url订阅的方式
+    path: ./profiles/sub2.yml # 配置文件缓存的位置
+    url:   # 网络上配置文件的位置
+    interval: 86400 # 自动更新时间
+    health-check: # 健康检测，检测失败就不会在自动选择中用该组代理
       enable: true
       url: http://www.gstatic.com/generate_204
-      interval: 3600
+      interval: 3600 # 检测间隔
 
 proxy-groups:
-- name: "🗺海外流量"
+- name: "🛫海外流量"
   type: select
   proxies:
-    - "auto"
-    - "手动选择1"
-    - "手动选择2"
-    - "🇭🇰香港"
-    - "🇹🇼台湾"
-    - "🇯🇵日本"
-    - "🇺🇸美国"
-    - "🇸🇬新加坡"
-    - "其它地区"
+    - "⚡️Auto"
+    - "👉🏻手动选择1"
+    - "👉🏻手动选择2"
+    - "🇭🇰香港 HongKong"
+    - "🇹🇼台湾 TaiWan"
+    - "🇯🇵日本 Japan"
+    - "🇺🇸美国 USA"
+    - "🇬🇧英国 UK"
+    - "🇸🇬新加坡 Singapore"
+    - "🇰🇷韩国  Korea"
+    - "🗺️其它地区"
 
-- name: "auto"
+- name: "⚡️Auto"
   type: url-test
   tolerance: 50
   <<: *use
 
-- name: "手动选择1"
+- name: "👉🏻手动选择1"
   type: select
   tolerance: 50
   <<: *use
 
-- name: "手动选择2"
+- name: "👉🏻手动选择2"
   type: select
   tolerance: 50
   <<: *use
 
 #代理地区
-- name: "🇭🇰香港"
+- name: "🇭🇰香港 HongKong"
   type: load-balance
   <<: *use
   filter: "(?i)港|hk|hongkong|hong kong"
   strategy: consistent-hashing
 
-- name: "🇹🇼台湾"
+- name: "🇹🇼台湾 TaiWan"
   type: load-balance
   <<: *use
   filter: "(?i)台|tw|taiwan"
   strategy: consistent-hashing
 
-- name: "🇯🇵日本"
+- name: "🇯🇵日本 Japan"
   type: load-balance
   <<: *use
-  filter: "(?i)🇯🇵日本|jp|japan"
+  filter: "(?i)日本|jp|japan"
   strategy: consistent-hashing
 
-- name: "🇺🇸美国"
+- name: "🇺🇸美国 USA"
   type: load-balance
   <<: *use
   filter: "(?i)美|us|unitedstates|united states"
   strategy: consistent-hashing
 
-- name: "🇬🇧英国"
+- name: "🇬🇧英国 UK"
   type: load-balance
   <<: *use
   filter: "(?i)英|uk|unitedkingdom|united kingdom"
   strategy: consistent-hashing
 
-- name: "🇸🇬新加坡"
+- name: "🇸🇬新加坡 Singapore"
   type: load-balance
   <<: *use
   filter: "(?i)(新|sg|singapore)"
   strategy: consistent-hashing
 
-- name: "🇰🇷韩国"
+- name: "🇰🇷韩国  Korea"
   type: load-balance
   <<: *use
   filter: "(?i)(韩|kr|korea)"
   strategy: consistent-hashing
 
-- name: "其它地区"
+#clash premium内核不支持此特性
+- name: "🗺️其它地区"
   <<: *use
-  exclude-filter: "(?i)港|hk|hongkong|hong kong|台|tw|taiwan|🇯🇵日本|jp|japan|美|us|unitedstates|united states|新|sg|singapore|韩|kr|korea|英|uk|unitedkingdom|united kingdom"
+  exclude-filter: "(?i)港|hk|hongkong|hong kong|台|tw|taiwan|日本|jp|japan|美|us|unitedstates|united states|新|sg|singapore|韩|kr|korea|英|uk|unitedkingdom|united kingdom"
 
-- name: "Google"
+- name: "🐱Google"
   type: select
   proxies:
-    - "🗺海外流量"
-    - "🇭🇰香港"
-    - "🇹🇼台湾"
-    - "🇯🇵日本"
-    - "🇺🇸美国"
-    - "🇸🇬新加坡"
-    - "🇰🇷韩国"
-    - "🇬🇧英国"
-    - "其它地区"
-    - "手动选择1"
-    - "手动选择2"
+    - "🛫海外流量"
+    - "🇭🇰香港 HongKong"
+    - "🇹🇼台湾 TaiWan"
+    - "🇯🇵日本 Japan"
+    - "🇺🇸美国 USA"
+    - "🇸🇬新加坡 Singapore"
+    - "🇰🇷韩国  Korea"
+    - "🇬🇧英国 UK"
+    - "🗺️其它地区"
+    - "👉🏻手动选择1"
+    - "👉🏻手动选择2"
 
-- name: "Microsoft"
+- name: "🐳Microsoft"
   type: select
   proxies:
-    - "🗺海外流量"
-    - "🇭🇰香港"
-    - "🇹🇼台湾"
-    - "🇯🇵日本"
-    - "🇺🇸美国"
-    - "🇸🇬新加坡"
-    - "🇰🇷韩国"
-    - "🇬🇧英国"
-    - "其它地区"
-    - "手动选择1"
-    - "手动选择2"
+    - "🛫海外流量"
+    - "🇭🇰香港 HongKong"
+    - "🇹🇼台湾 TaiWan"
+    - "🇯🇵日本 Japan"
+    - "🇺🇸美国 USA"
+    - "🇸🇬新加坡 Singapore"
+    - "🇰🇷韩国  Korea"
+    - "🇬🇧英国 UK"
+    - "🗺️其它地区"
+    - "👉🏻手动选择1"
+    - "👉🏻手动选择2"
     - DIRECT
 
-- name: "Apple"
-  type: select
-  proxies:
-    - DIRECT
-    - "🗺海外流量"
-    - "🇭🇰香港"
-    - "🇹🇼台湾"
-    - "🇯🇵日本"
-    - "🇺🇸美国"
-    - "🇸🇬新加坡"
-    - "🇰🇷韩国"
-    - "🇬🇧英国"
-    - "其它地区"
-    - "手动选择1"
-    - "手动选择2"
-
-- name: "OpenAI"
-  type: select
-  proxies:
-    - "🗺海外流量"
-    - "🇭🇰香港"
-    - "🇹🇼台湾"
-    - "🇯🇵日本"
-    - "🇺🇸美国"
-    - "🇸🇬新加坡"
-    - "🇰🇷韩国"
-    - "🇬🇧英国"
-    - "其它地区"
-    - "手动选择1"
-    - "手动选择2"
-
-- name: "Game"
+- name: "🍎苹果服务"
   type: select
   proxies:
     - DIRECT
-    - "🗺海外流量"
-    - "🇭🇰香港"
-    - "🇹🇼台湾"
-    - "🇯🇵日本"
-    - "🇺🇸美国"
-    - "🇸🇬新加坡"
-    - "🇰🇷韩国"
-    - "🇬🇧英国"
-    - "其它地区"
-    - "手动选择1"
-    - "手动选择2"
+    - "🛫海外流量"
+    - "🇭🇰香港 HongKong"
+    - "🇹🇼台湾 TaiWan"
+    - "🇯🇵日本 Japan"
+    - "🇺🇸美国 USA"
+    - "🇸🇬新加坡 Singapore"
+    - "🇰🇷韩国  Korea"
+    - "🇬🇧英国 UK"
+    - "🗺️其它地区"
+    - "👉🏻手动选择1"
+    - "👉🏻手动选择2"
 
-- name: "Telegram"
-  type: select
-  proxies:
-    - "🗺海外流量"
-    - "🇭🇰香港"
-    - "🇹🇼台湾"
-    - "🇯🇵日本"
-    - "🇺🇸美国"
-    - "🇸🇬新加坡"
-    - "🇰🇷韩国"
-    - "🇬🇧英国"
-    - "其它地区"
-    - "手动选择1"
-    - "手动选择2"
-
-- name: "Twitter"
-  type: select
-  proxies:
-    - "🗺海外流量"
-    - "🇭🇰香港"
-    - "🇹🇼台湾"
-    - "🇯🇵日本"
-    - "🇺🇸美国"
-    - "🇸🇬新加坡"
-    - "🇰🇷韩国"
-    - "🇬🇧英国"
-    - "其它地区"
-    - "手动选择1"
-    - "手动选择2"
-
-- name: "YouTube"
-  type: select
-  proxies:
-    - "🗺海外流量"
-    - "🇭🇰香港"
-    - "🇹🇼台湾"
-    - "🇯🇵日本"
-    - "🇺🇸美国"
-    - "🇸🇬新加坡"
-    - "🇰🇷韩国"
-    - "🇬🇧英国"
-    - "其它地区"
-    - "手动选择1"
-    - "手动选择2"
-
-
-- name: "海外流媒体"
-  type: select
-  proxies:
-    - "🗺海外流量"
-    - "🇭🇰香港"
-    - "🇹🇼台湾"
-    - "🇯🇵日本"
-    - "🇺🇸美国"
-    - "🇸🇬新加坡"
-    - "🇰🇷韩国"
-    - "🇬🇧英国"
-    - "其它地区"
-    - "手动选择1"
-    - "手动选择2"
-
-- name: "哔哩哔哩"
+- name: "🦁Amazon"
   type: select
   proxies:
     - DIRECT
+    - "🛫海外流量"
+    - "🇭🇰香港 HongKong"
+    - "🇹🇼台湾 TaiWan"
+    - "🇯🇵日本 Japan"
+    - "🇺🇸美国 USA"
+    - "🇸🇬新加坡 Singapore"
+    - "🇰🇷韩国  Korea"
+    - "🇬🇧英国 UK"
+    - "🗺️其它地区"
+    - "👉🏻手动选择1"
+    - "👉🏻手动选择2"
+
+- name: "🧜‍♀️OpenAI"
+  type: select
+  proxies:
+    - "🛫海外流量"
+    - "🇭🇰香港 HongKong"
+    - "🇹🇼台湾 TaiWan"
+    - "🇯🇵日本 Japan"
+    - "🇺🇸美国 USA"
+    - "🇸🇬新加坡 Singapore"
+    - "🇰🇷韩国  Korea"
+    - "🇬🇧英国 UK"
+    - "🗺️其它地区"
+    - "👉🏻手动选择1"
+    - "👉🏻手动选择2"
+
+- name: "🧑‍💻Github"
+  type: select
+  proxies:
+    - "🛫海外流量"
+    - "🇭🇰香港 HongKong"
+    - "🇹🇼台湾 TaiWan"
+    - "🇯🇵日本 Japan"
+    - "🇺🇸美国 USA"
+    - "🇸🇬新加坡 Singapore"
+    - "🇰🇷韩国  Korea"
+    - "🇬🇧英国 UK"
+    - "🗺️其它地区"
+    - "👉🏻手动选择1"
+    - "👉🏻手动选择2"
+
+- name: "☁️CloudGlobal"
+  type: select
+  proxies:
+    - "🛫海外流量"
+    - "🇭🇰香港 HongKong"
+    - "🇹🇼台湾 TaiWan"
+    - "🇯🇵日本 Japan"
+    - "🇺🇸美国 USA"
+    - "🇸🇬新加坡 Singapore"
+    - "🇰🇷韩国  Korea"
+    - "🇬🇧英国 UK"
+    - "🗺️其它地区"
+    - "👉🏻手动选择1"
+    - "👉🏻手动选择2"
+
+- name: "🕹️Game"
+  type: select
+  proxies:
+    - DIRECT
+    - "🛫海外流量"
+    - "🇭🇰香港 HongKong"
+    - "🇹🇼台湾 TaiWan"
+    - "🇯🇵日本 Japan"
+    - "🇺🇸美国 USA"
+    - "🇸🇬新加坡 Singapore"
+    - "🇰🇷韩国  Korea"
+    - "🇬🇧英国 UK"
+    - "🗺️其它地区"
+    - "👉🏻手动选择1"
+    - "👉🏻手动选择2"
+
+- name: "✈️Telegram"
+  type: select
+  proxies:
+    - "🛫海外流量"
+    - "🇭🇰香港 HongKong"
+    - "🇹🇼台湾 TaiWan"
+    - "🇯🇵日本 Japan"
+    - "🇺🇸美国 USA"
+    - "🇸🇬新加坡 Singapore"
+    - "🇰🇷韩国  Korea"
+    - "🇬🇧英国 UK"
+    - "🗺️其它地区"
+    - "👉🏻手动选择1"
+    - "👉🏻手动选择2"
+
+- name: "🐦Twitter"
+  type: select
+  proxies:
+    - "🛫海外流量"
+    - "🇭🇰香港 HongKong"
+    - "🇹🇼台湾 TaiWan"
+    - "🇯🇵日本 Japan"
+    - "🇺🇸美国 USA"
+    - "🇸🇬新加坡 Singapore"
+    - "🇰🇷韩国  Korea"
+    - "🇬🇧英国 UK"
+    - "🗺️其它地区"
+    - "👉🏻手动选择1"
+    - "👉🏻手动选择2"
+
+- name: "💃TikTok"
+  type: select
+  proxies:
+    - "🛫海外流量"
+    - "🇭🇰香港 HongKong"
+    - "🇹🇼台湾 TaiWan"
+    - "🇯🇵日本 Japan"
+    - "🇺🇸美国 USA"
+    - "🇸🇬新加坡 Singapore"
+    - "🇰🇷韩国  Korea"
+    - "🇬🇧英国 UK"
+    - "🗺️其它地区"
+    - "👉🏻手动选择1"
+    - "👉🏻手动选择2"
+
+- name: "📹️YouTube"
+  type: select
+  proxies:
+    - "🛫海外流量"
+    - "🇭🇰香港 HongKong"
+    - "🇹🇼台湾 TaiWan"
+    - "🇯🇵日本 Japan"
+    - "🇺🇸美国 USA"
+    - "🇸🇬新加坡 Singapore"
+    - "🇰🇷韩国  Korea"
+    - "🇬🇧英国 UK"
+    - "🗺️其它地区"
+    - "👉🏻手动选择1"
+    - "👉🏻手动选择2"
+
+- name: "📼海外流媒体"
+  type: select
+  proxies:
+    - "🛫海外流量"
+    - "🇭🇰香港 HongKong"
+    - "🇹🇼台湾 TaiWan"
+    - "🇯🇵日本 Japan"
+    - "🇺🇸美国 USA"
+    - "🇸🇬新加坡 Singapore"
+    - "🇰🇷韩国  Korea"
+    - "🇬🇧英国 UK"
+    - "🗺️其它地区"
+    - "👉🏻手动选择1"
+    - "👉🏻手动选择2"
+
+- name: "🎧️Spotify"
+  type: select
+  proxies:
+    - "🛫海外流量"
+    - "🇭🇰香港 HongKong"
+    - "🇹🇼台湾 TaiWan"
+    - "🇯🇵日本 Japan"
+    - "🇺🇸美国 USA"
+    - "🇸🇬新加坡 Singapore"
+    - "🇰🇷韩国  Korea"
+    - "🇬🇧英国 UK"
+    - "🗺️其它地区"
+    - "👉🏻手动选择1"
+    - "👉🏻手动选择2"
+
+- name: "📼国内流媒体"
+  type: select
+  proxies:
+    - DIRECT
+    - "🛫海外流量"
+    - "🇭🇰香港 HongKong"
+    - "🇹🇼台湾 TaiWan"
+    - "🇯🇵日本 Japan"
+    - "🇺🇸美国 USA"
+    - "🇸🇬新加坡 Singapore"
+    - "🇰🇷韩国  Korea"
+    - "🇬🇧英国 UK"
+    - "🗺️其它地区"
+    - "👉🏻手动选择1"
+    - "👉🏻手动选择2"
+
+- name: "📺️哔哩哔哩"
+  type: select
+  proxies:
+    - DIRECT
+    - "🗺️其它地区"
+    - "👉🏻手动选择1"
+    - "👉🏻手动选择2"
   <<: *use
-  filter: "(?i)港|hk|hongkong|hong kong"
+  filter: "(?i)港|hk|hongkong|hong kong|台|tw|taiwan"
 
-- name: "哔哩哔哩东南亚"
+- name: "📺️哔哩哔哩东南亚"
   type: select
   proxies:
-    - "🇸🇬新加坡"
-    - "其它地区"
-    - "手动选择1"
-    - "手动选择2"
+    - "🇸🇬新加坡 Singapore"
+    - "🗺️其它地区"
+    - "👉🏻手动选择1"
+    - "👉🏻手动选择2"
 
-- name: "巴哈姆特"
+- name: "📺️巴哈姆特"
   type: select
   <<: *use
   filter: "(?i)台|tw|taiwan"
 
-- name: "Pixiv"
+- name: "🥵Pixiv"
   type: select
   <<: *use
-  filter: "(?i)🇯🇵日本|jp|japan"
+  filter: "(?i)日本|jp|japan"
 
-- name: "ehentai"
+- name: "🥵EHentai"
   type: select
   proxies:
-    - "🗺海外流量"
-    - "🇭🇰香港"
-    - "🇹🇼台湾"
-    - "🇺🇸美国"
-    - "🇸🇬新加坡"
-    - "🇰🇷韩国"
-    - "🇬🇧英国"
-    - "其它地区"
-    - "手动选择1"
-    - "手动选择2"
+    - "🛫海外流量"
+    - "🇭🇰香港 HongKong"
+    - "🇹🇼台湾 TaiWan"
+    - "🇺🇸美国 USA"
+    - "🇸🇬新加坡 Singapore"
+    - "🇰🇷韩国  Korea"
+    - "🇬🇧英国 UK"
+    - "🗺️其它地区"
+    - "👉🏻手动选择1"
+    - "👉🏻手动选择2"
 
-- name: "广告拦截"
+- name: "⬇PT下载"
+  type: select
+  proxies:
+    - "🛫海外流量"
+    - "🇭🇰香港 HongKong"
+    - "🇹🇼台湾 TaiWan"
+    - "🇯🇵日本 Japan"
+    - "🇺🇸美国 USA"
+    - "🇸🇬新加坡 Singapore"
+    - "🇰🇷韩国  Korea"
+    - "🇬🇧英国 UK"
+    - "🗺️其它地区"
+    - "👉🏻手动选择1"
+    - "👉🏻手动选择2"
+
+- name: "🎯广告拦截"
   type: select
   proxies:
     - REJECT
+    - 🐟️漏网之鱼
     - DIRECT
 
-- name: "其他"
+- name: "🐟️漏网之鱼"
   type: select
   proxies:
-    - "🗺海外流量"
-    - "手动选择1"
-    - "手动选择2"
+    - "🛫海外流量"
+    - "👉🏻手动选择1"
+    - "👉🏻手动选择2"
     - DIRECT
 
 geodata-mode: true
@@ -343,7 +466,7 @@ rule-providers:
   Direct:
     type: http
     behavior: classical
-    url: "https://cdn.jsdelivr.net/gh/blackmatrix7/ios_rule_script@master/rule/Clash/Direct/Direct.yaml"
+    url: "https://cdn.jsdelivr.net/gh/Loyalsoldier/clash-rules@release/applications.txt"
     path: ./ruleset/Direct.yaml
     interval: 86400
   #广告域名
@@ -432,6 +555,13 @@ rule-providers:
     path: ./ruleset/Microsoft.yaml
     interval: 86400
 
+  Amazon:
+    type: http
+    behavior: classical
+    url: "https://cdn.jsdelivr.net/gh/blackmatrix7/ios_rule_script@master/rule/Clash/Amazon/Amazon.yaml"
+    path: ./ruleset/Amazon.yaml
+    interval: 86400
+
   Bing:
     type: http
     behavior: classical
@@ -444,6 +574,20 @@ rule-providers:
     behavior: classical
     url: "https://cdn.jsdelivr.net/gh/blackmatrix7/ios_rule_script@master/rule/Clash/OpenAI/OpenAI.yaml"
     path: ./ruleset/OpenAI.yaml
+    interval: 86400
+
+  Github:
+    type: http
+    behavior: classical
+    url: "https://cdn.jsdelivr.net/gh/blackmatrix7/ios_rule_script@master/rule/Clash/GitHub/GitHub.yaml"
+    path: ./ruleset/Github.yaml
+    interval: 86400
+
+  CloudGlobal:
+    type: http
+    behavior: classical
+    url: "https://cdn.jsdelivr.net/gh/blackmatrix7/ios_rule_script@master/rule/Clash/Cloud/CloudGlobal/CloudGlobal_Classical.yaml"
+    path: ./ruleset/CloudGlobal.yaml
     interval: 86400
 
   YouTube:
@@ -502,6 +646,13 @@ rule-providers:
     path: ./ruleset/Pandora.yaml
     interval: 86400
 
+  Spotify:
+    type: http
+    behavior: classical
+    url: "https://cdn.jsdelivr.net/gh/blackmatrix7/ios_rule_script@master/rule/Clash/Spotify/Spotify.yaml"
+    path: ./ruleset/Spotify.yaml
+    interval: 86400
+
   Bahamut:
     type: http
     behavior: classical
@@ -551,11 +702,11 @@ rule-providers:
     path: ./ruleset/BiliBili.yaml
     interval: 86400
 
-  ehentai:
+  EHentai:
     type: http
     behavior: classical
     url: "https://cdn.jsdelivr.net/gh/alex177027/clash-meta-rules@v0.1/EHentai.yaml"
-    path: ./ruleset/ehentai.yaml
+    path: ./ruleset/EHentai.yaml
     interval: 86400
 
   BiliBiliIntl:
@@ -565,63 +716,127 @@ rule-providers:
     path: ./ruleset/BiliBiliIntl.yaml
     interval: 86400
 
+  PT:
+    type: http
+    behavior: classical
+    url: "https://cdn.jsdelivr.net/gh/blackmatrix7/ios_rule_script@master/rule/Clash/PrivateTracker/PrivateTracker.yaml"
+    path: ./ruleset/PT.yaml
+    interval: 86400
+
+  TencentVideo:
+    type: http
+    behavior: classical
+    url: "https://cdn.jsdelivr.net/gh/blackmatrix7/ios_rule_script@master/rule/Clash/TencentVideo/TencentVideo.yaml"
+    path: ./ruleset/TencentVideo.yaml
+    interval: 86400
+
+  WeTV:
+    type: http
+    behavior: classical
+    url: "https://cdn.jsdelivr.net/gh/blackmatrix7/ios_rule_script@master/rule/Clash/WeTV/WeTV.yaml"
+    path: ./ruleset/WeTV.yaml
+    interval: 86400
+
+  iQIYI:
+    type: http
+    behavior: classical
+    url: "https://cdn.jsdelivr.net/gh/blackmatrix7/ios_rule_script@master/rule/Clash/iQIYI/iQIYI.yaml"
+    path: ./ruleset/iQIYI.yaml
+    interval: 86400
+
+  Youku:
+    type: http
+    behavior: classical
+    url: "https://cdn.jsdelivr.net/gh/blackmatrix7/ios_rule_script@master/rule/Clash/Youku/Youku.yaml"
+    path: ./ruleset/Youku.yaml
+    interval: 86400
+
+  TikTok:
+    type: http
+    behavior: classical
+    url: "https://cdn.jsdelivr.net/gh/blackmatrix7/ios_rule_script@master/rule/Clash/TikTok/TikTok.yaml"
+    path: ./ruleset/TikTok.yaml
+    interval: 86400
+
 rules:
   - RULE-SET,private,DIRECT #私有网络
   - RULE-SET,lancidr,DIRECT #局域网 IP 及保留 IP 地址列表
   - RULE-SET,Direct,DIRECT
+
+  - RULE-SET,Youku,📼国内流媒体 #与广告冲突
   #广告域名
-  - RULE-SET,Advertising_Classical,广告拦截
+  - RULE-SET,Advertising_Classical,🎯广告拦截
   - RULE-SET,AdGuardSDNSFilter_Direct,DIRECT
-  - RULE-SET,AdGuardSDNSFilter_Classical,广告拦截
-  - RULE-SET,BlockHttpDNS,广告拦截
+  - RULE-SET,AdGuardSDNSFilter_Classical,🎯广告拦截
+  - RULE-SET,BlockHttpDNS,🎯广告拦截
 
   #个人偏好
-  - RULE-SET,Marketing,广告拦截
+  - RULE-SET,Marketing,🎯广告拦截
 
   #偷渡
-  - RULE-SET,BiliBili,哔哩哔哩
-  - RULE-SET,BiliBiliIntl,哔哩哔哩东南亚
+  - RULE-SET,BiliBiliIntl,📺️哔哩哔哩东南亚
+  - RULE-SET,BiliBili,📺️哔哩哔哩
+  - RULE-SET,TencentVideo,📼国内流媒体
+  - RULE-SET,WeTV,📼国内流媒体
+  - RULE-SET,iQIYI,📼国内流媒体
+
+  #PT
+  - RULE-SET,PT,⬇PT下载
 
   #国外服务
-  - RULE-SET,ehentai,ehentai #ehentai
-  - RULE-SET,Pixiv,Pixiv #Pixiv
+  - RULE-SET,EHentai,🥵EHentai #EHentai
+  - RULE-SET,Pixiv,🥵Pixiv #Pixiv
   #Notion
   - DOMAIN-SUFFIX,notion.so,DIRECT
   #Apple
-  - RULE-SET,Apple,Apple
+  - RULE-SET,Apple,🍎苹果服务
   #Google
-  - RULE-SET,Google,Google
+  - RULE-SET,Google,🐱Google
   #Telegram
-  - RULE-SET,Telegram,Telegram
+  - RULE-SET,Telegram,✈️Telegram
   #Twitter
-  - RULE-SET,Twitter,Twitter
+  - RULE-SET,Twitter,🐦Twitter
+  - RULE-SET,TikTok,💃TikTok
   # OpenAI (ChatGPT)
-  - RULE-SET,OpenAI,OpenAI
+  - RULE-SET,OpenAI,🧜‍♀️OpenAI
   # Microsoft
-  - RULE-SET,Microsoft,Microsoft
-  - RULE-SET,Bing,Microsoft
+  - RULE-SET,Microsoft,🐳Microsoft
+  - RULE-SET,Bing,🐳Microsoft
+  #Amazon
+  - RULE-SET,Amazon,🦁Amazon
+
+  #Github
+  - RULE-SET,Github,🧑‍💻Github
 
   #海外流媒体
-  - RULE-SET,YouTube,YouTube
-  - RULE-SET,YouTubeMusic,YouTube
+  - RULE-SET,YouTube,📹️YouTube
+  - RULE-SET,YouTubeMusic,📹️YouTube
   #Netflix
-  - RULE-SET,Netflix,海外流媒体
-  - RULE-SET,Netflix_IP,海外流媒体,,no-resolve
+  - RULE-SET,Netflix,📼海外流媒体
+  - RULE-SET,Netflix_IP,📼海外流媒体,,no-resolve
   # Disney+
-  - RULE-SET,Discovery,海外流媒体
+  - RULE-SET,Discovery,📼海外流媒体
   # Hulu
-  - RULE-SET,Hulu,海外流媒体
+  - RULE-SET,Hulu,📼海外流媒体
   # HBO
-  - RULE-SET,HBO,海外流媒体
+  - RULE-SET,HBO,📼海外流媒体
   # Pandora
-  - RULE-SET,Pandora,海外流媒体
+  - RULE-SET,Pandora,📼海外流媒体
+  #Spotify
+  - RULE-SET,Spotify,🎧️Spotify
   #巴哈姆特
-  - RULE-SET,Bahamut,巴哈姆特
+  - RULE-SET,Bahamut,📺️巴哈姆特
   #游戏
-  - RULE-SET,Game,Game
   - RULE-SET,GameDownloadCN,DIRECT #游戏下载
+  - RULE-SET,Game,🕹️Game
+  #海外手游
+  - DOMAIN-SUFFIX,cq.hangame.com,🇰🇷韩国  Korea
+  
+  #CloudGlobal
+  - RULE-SET,CloudGlobal,☁️CloudGlobal
 
+  #补充
   - RULE-SET,ChinaMax,DIRECT
   - RULE-SET,applications,DIRECT #需要直连的常见软件
   - GEOIP,CN,DIRECT
-  - MATCH,其他
+  - MATCH,🐟️漏网之鱼
