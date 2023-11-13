@@ -782,7 +782,6 @@ rules:
 
   #个人偏好
   - RULE-SET,Marketing,🎯广告拦截
-  - DOMAIN-SUFFIX,hdslb.com,🎯广告拦截
 
   #偷渡
   - RULE-SET,BiliBiliIntl,📺️哔哩哔哩东南亚
