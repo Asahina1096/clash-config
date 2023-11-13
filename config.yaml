@@ -51,23 +51,12 @@ sniffer:
 use: &use
   type: select
   use:
-  - sub1
-  - sub2
+  - sub
 
 proxy-providers:
-  sub1: #组名
+  sub: #组名
     type: http # url订阅的方式
     path: ./profiles/sub1.yml # 配置文件缓存的位置
-    url:   # 网络上配置文件的位置
-    interval: 86400 # 自动更新时间
-    health-check: # 健康检测，检测失败就不会在自动选择中用该组代理
-      enable: true
-      url: http://www.gstatic.com/generate_204
-      interval: 3600 # 检测间隔
-
-  sub2: #组名
-    type: http # url订阅的方式
-    path: ./profiles/sub2.yml # 配置文件缓存的位置
     url:   # 网络上配置文件的位置
     interval: 86400 # 自动更新时间
     health-check: # 健康检测，检测失败就不会在自动选择中用该组代理
@@ -407,7 +396,7 @@ proxy-groups:
   <<: *use
   filter: "(?i)台|tw|taiwan"
 
-- name: "🥵Pixiv"
+- name: "🥵Niconico"
   type: select
   <<: *use
   filter: "(?i)日本|jp|japan"
@@ -445,7 +434,6 @@ proxy-groups:
   type: select
   proxies:
     - REJECT
-    - 🐟️漏网之鱼
     - DIRECT
 
 - name: "🐟️漏网之鱼"
@@ -562,6 +550,13 @@ rule-providers:
     path: ./ruleset/Amazon.yaml
     interval: 86400
 
+  AmazonIP:
+    type: http
+    behavior: ipcidr
+    url: "https://cdn.jsdelivr.net/gh/blackmatrix7/ios_rule_script@master/rule/Clash/AmazonIP/AmazonIP_IP.yaml"
+    path: ./ruleset/AmazonIP.yaml
+    interval: 86400
+
   Bing:
     type: http
     behavior: classical
@@ -607,15 +602,8 @@ rule-providers:
   Netflix:
     type: http
     behavior: classical
-    url: "https://cdn.jsdelivr.net/gh/blackmatrix7/ios_rule_script@master/rule/Clash/Netflix/Netflix.yaml"
+    url: "https://cdn.jsdelivr.net/gh/blackmatrix7/ios_rule_script@master/rule/Clash/Netflix/Netflix_Classical.yaml"
     path: ./ruleset/Netflix.yaml
-    interval: 86400
-
-  Netflix_IP:
-    type: http
-    behavior: ipcidr
-    url: "https://cdn.jsdelivr.net/gh/blackmatrix7/ios_rule_script@master/rule/Clash/Netflix/Netflix_IP.yaml"
-    path: ./ruleset/Netflix_IP.yaml
     interval: 86400
 
   Discovery:
@@ -623,6 +611,13 @@ rule-providers:
     behavior: classical
     url: "https://cdn.jsdelivr.net/gh/blackmatrix7/ios_rule_script@master/rule/Clash/Disney/Disney.yaml"
     path: ./ruleset/Discovery.yaml
+    interval: 86400
+
+  AmazonPrimeVideo:
+    type: http
+    behavior: classical
+    url: "https://cdn.jsdelivr.net/gh/blackmatrix7/ios_rule_script@master/rule/Clash/AmazonPrimeVideo/AmazonPrimeVideo.yaml"
+    path: ./ruleset/AmazonPrimeVideo.yaml
     interval: 86400
 
   Hulu:
@@ -709,6 +704,13 @@ rule-providers:
     path: ./ruleset/EHentai.yaml
     interval: 86400
 
+  Niconico:
+    type: http
+    behavior: classical
+    url: "https://cdn.jsdelivr.net/gh/blackmatrix7/ios_rule_script@master/rule/Clash/Niconico/Niconico.yaml"
+    path: ./ruleset/Niconico.yaml
+    interval: 86400
+
   BiliBiliIntl:
     type: http
     behavior: classical
@@ -758,6 +760,13 @@ rule-providers:
     path: ./ruleset/TikTok.yaml
     interval: 86400
 
+  AWAvenue:
+    type: http
+    behavior: domain
+    url: "https://cdn.jsdelivr.net/gh/alex177027/AWAvenue-Adblock-Rule@v0.1/AWAvenue-Adblock-Rule.yaml"
+    path: ./ruleset/AWAvenue.yaml
+    interval: 86400
+
 rules:
   - RULE-SET,private,DIRECT #私有网络
   - RULE-SET,lancidr,DIRECT #局域网 IP 及保留 IP 地址列表
@@ -766,12 +775,14 @@ rules:
   - RULE-SET,Youku,📼国内流媒体 #与广告冲突
   #广告域名
   - RULE-SET,Advertising_Classical,🎯广告拦截
-  - RULE-SET,AdGuardSDNSFilter_Direct,DIRECT
+  - RULE-SET,AdGuardSDNSFilter_Direct,🐟️漏网之鱼
   - RULE-SET,AdGuardSDNSFilter_Classical,🎯广告拦截
   - RULE-SET,BlockHttpDNS,🎯广告拦截
+  - RULE-SET,AWAvenue,🎯广告拦截
 
   #个人偏好
   - RULE-SET,Marketing,🎯广告拦截
+  - DOMAIN-SUFFIX,hdslb.com,🎯广告拦截
 
   #偷渡
   - RULE-SET,BiliBiliIntl,📺️哔哩哔哩东南亚
@@ -785,7 +796,8 @@ rules:
 
   #国外服务
   - RULE-SET,EHentai,🥵EHentai #EHentai
-  - RULE-SET,Pixiv,🥵Pixiv #Pixiv
+  - RULE-SET,Pixiv,🛫海外流量
+  - RULE-SET,Niconico,🥵Niconico
   #Notion
   - DOMAIN-SUFFIX,notion.so,DIRECT
   #Apple
@@ -802,8 +814,10 @@ rules:
   # Microsoft
   - RULE-SET,Microsoft,🐳Microsoft
   - RULE-SET,Bing,🐳Microsoft
-  #Amazon
+  #Amazon&PrimeVideo
+  - RULE-SET,AmazonPrimeVideo,📼海外流媒体
   - RULE-SET,Amazon,🦁Amazon
+  - RULE-SET,AmazonIP,🦁Amazon
 
   #Github
   - RULE-SET,Github,🧑‍💻Github
@@ -813,7 +827,6 @@ rules:
   - RULE-SET,YouTubeMusic,📹️YouTube
   #Netflix
   - RULE-SET,Netflix,📼海外流媒体
-  - RULE-SET,Netflix_IP,📼海外流媒体,,no-resolve
   # Disney+
   - RULE-SET,Discovery,📼海外流媒体
   # Hulu
