@@ -771,7 +771,7 @@ rule-providers:
   Ad_Rule_Supplement:
     type: http
     behavior: classical
-    url: "https://cdn.jsdelivr.net/gh/alex177027/clash-meta-rules@v0.1/Supplement.yaml"
+    url: "https://gh-proxy.com/https://raw.githubusercontent.com/alex177027/clash-rules/main/Supplement.yaml"
     path: ./ruleset/Supplement.yaml
     interval: 86400
 
@@ -787,7 +787,7 @@ rules:
   - RULE-SET,AdGuardSDNSFilter_Classical,🎯广告拦截
   - RULE-SET,BlockHttpDNS,🎯广告拦截
   - RULE-SET,AWAvenue,🎯广告拦截
-  - RULE-SET,Supplement,🎯广告拦截
+  - RULE-SET,Ad_Rule_Supplement🎯广告拦截
 
   #个人偏好
   - RULE-SET,Marketing,🎯广告拦截
