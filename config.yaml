@@ -770,7 +770,7 @@ rule-providers:
 
   Ad_Rule_Supplement:
     type: http
-    behavior: domain
+    behavior: classical
     url: "https://cdn.jsdelivr.net/gh/alex177027/clash-meta-rules@v0.1/Supplement.yaml"
     path: ./ruleset/Supplement.yaml
     interval: 86400
