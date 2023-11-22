@@ -1,5 +1,5 @@
 mixed-port: 7890
-allow-lan: true
+allow-lan: false
 bind-address: '*'
 mode: rule
 log-level: info
@@ -53,11 +53,6 @@ sniffer:
     - +.v2ex.com
   skip-domain:
     - Mijia Cloud
-
-use: &use
-  type: select
-  use:
-  - sub1
 
 proxy-providers:
   sub1: #组名
@@ -580,13 +575,6 @@ rule-providers:
     path: ./ruleset/ChinaMax.yaml
     interval: 86400
 
-  applications: #需要直连的常见软件
-    type: http
-    behavior: classical
-    url: "https://cdn.jsdelivr.net/gh/Loyalsoldier/clash-rules@release/applications.txt"
-    path: ./ruleset/applications.yaml
-    interval: 86400
-
 #海外服务
   Google: 
     type: http
@@ -924,6 +912,5 @@ rules:
 
   #补充
   - RULE-SET,ChinaMax,DIRECT
-  - RULE-SET,applications,DIRECT #需要直连的常见软件
   - GEOIP,CN,DIRECT
   - MATCH,🐟️漏网之鱼

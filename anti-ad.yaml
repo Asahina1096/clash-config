@@ -1,0 +1,157 @@
+mixed-port: 7890
+allow-lan: false
+bind-address: '*'
+mode: rule
+log-level: info
+external-controller: '127.0.0.1:9090'
+
+experimental: # experimental feature
+  ignore-resolve-fail: true # ignore dns resolve fail, default value is true
+
+hosts:
+  '*.clash.dev': '127.0.0.1'
+  'alpha.clash.dev': '::1'
+  '*.notion.so': '119.28.13.121' #notion
+
+dns:
+  enable: true # set true to enable dns (default is false)
+  ipv6: false # default is false
+  listen: 0.0.0.0:53
+  enhanced-mode: fake-ip # or redir-host
+  fake-ip-range: 198.18.0.1/16 # if you don't know what it is, don't change it
+  nameserver:
+    - https://doh.pub/dns-query
+    - https://dns.alidns.com
+  fallback: # concurrent request with nameserver, fallback used when GEOIP country isn't CN
+    - https://8.8.8.8/dns-query
+    - https://1.1.1.1/dns-query
+  fallback-filter:
+    geoip: true # default
+    ipcidr: # ips in these subnets will be considered polluted
+      - 240.0.0.0/4 
+
+tun:
+  enable: true
+  stack: system
+  auto-route: true
+  auto-detect-interface: true
+
+sniffer:
+  enable: false
+  force-dns-mapping: true
+  parse-pure-ip: true
+  override-destination: false
+  sniff:
+    HTTP:
+      ports: [80, 8080-8880]
+      override-destination: true
+    TLS:
+      ports: [443, 8443]
+    QUIC:
+      ports: [443, 8443]
+  force-domain:
+    - +.v2ex.com
+  skip-domain:
+    - Mijia Cloud
+
+proxy-groups:
+- name: "🎯广告拦截"
+  type: select
+  proxies:
+    - REJECT
+    - DIRECT
+
+geodata-mode: true
+geox-url:
+  geoip: "https://fastly.jsdelivr.net/gh/MetaCubeX/meta-rules-dat@release/geoip.dat"
+  geosite: "https://fastly.jsdelivr.net/gh/MetaCubeX/meta-rules-dat@release/geosite.dat"
+  mmdb: "https://fastly.jsdelivr.net/gh/MetaCubeX/meta-rules-dat@release/country.mmdb"
+
+rule-providers:
+  Direct:
+    type: http
+    behavior: classical
+    url: "https://cdn.jsdelivr.net/gh/Loyalsoldier/clash-rules@release/applications.txt"
+    path: ./ruleset/Direct.yaml
+    interval: 86400
+  #广告域名
+  Advertising_Classical:
+    type: http
+    behavior: classical
+    url: "https://cdn.jsdelivr.net/gh/blackmatrix7/ios_rule_script@master/rule/Clash/Advertising/Advertising_Classical.yaml"
+    path: ./ruleset/Advertising_Classical.yaml
+    interval: 86400
+  
+  AdGuardSDNSFilter_Direct:
+    type: http
+    behavior: classical
+    url: "https://cdn.jsdelivr.net/gh/blackmatrix7/ios_rule_script@master/rule/Clash/AdGuardSDNSFilter/Direct/Direct.yaml"
+    path: ./ruleset/AdGuardSDNSFilter_Direct.yaml
+    interval: 86400
+
+  AdGuardSDNSFilter_Classical:
+    type: http
+    behavior: classical
+    url: "https://cdn.jsdelivr.net/gh/blackmatrix7/ios_rule_script@master/rule/Clash/Advertising/Advertising_Classical.yaml"
+    path: ./ruleset/AdGuardSDNSFilter_Classical.yaml
+    interval: 86400
+
+  BlockHttpDNS:
+    type: http
+    behavior: classical
+    url: "https://cdn.jsdelivr.net/gh/blackmatrix7/ios_rule_script@master/rule/Clash/BlockHttpDNS/BlockHttpDNS.yaml"
+    path: ./ruleset/BlockHttpDNS.yaml
+    interval: 86400
+
+  Marketing: #思杰马克丁软件
+    type: http
+    behavior: classical
+    url: "https://cdn.jsdelivr.net/gh/blackmatrix7/ios_rule_script@master/rule/Clash/Marketing/Marketing.yaml"
+    path: ./ruleset/Marketing.yaml
+    interval: 86400
+    
+  private: #私有网络
+    type: http
+    behavior: domain
+    url: "https://cdn.jsdelivr.net/gh/Loyalsoldier/clash-rules@release/private.txt"
+    path: ./ruleset/private.yaml
+    interval: 86400
+
+  lancidr: #局域网 IP 及保留 IP 地址列表
+    type: http
+    behavior: ipcidr
+    url: "https://cdn.jsdelivr.net/gh/Loyalsoldier/clash-rules@release/lancidr.txt"
+    path: ./ruleset/lancidr.yaml
+    interval: 86400
+
+  AWAvenue:
+    type: http
+    behavior: domain
+    url: "https://cdn.jsdelivr.net/gh/alex177027/AWAvenue-Adblock-Rule@v0.1/AWAvenue-Adblock-Rule.yaml"
+    path: ./ruleset/AWAvenue.yaml
+    interval: 86400
+
+  Ad_Rule_Supplement:
+    type: http
+    behavior: classical
+    url: "https://gh-proxy.com/https://raw.githubusercontent.com/alex177027/clash-rules/main/Supplement.yaml"
+    path: ./ruleset/Supplement.yaml
+    interval: 86400
+
+rules:
+  - RULE-SET,private,DIRECT #私有网络
+  - RULE-SET,lancidr,DIRECT #局域网 IP 及保留 IP 地址列表
+  - RULE-SET,Direct,DIRECT
+
+  #广告域名
+  - RULE-SET,Advertising_Classical,🎯广告拦截
+  - RULE-SET,AdGuardSDNSFilter_Direct,🐟️漏网之鱼
+  - RULE-SET,AdGuardSDNSFilter_Classical,🎯广告拦截
+  - RULE-SET,BlockHttpDNS,🎯广告拦截
+  - RULE-SET,AWAvenue,🎯广告拦截
+  - RULE-SET,Ad_Rule_Supplement,🎯广告拦截
+
+  #个人偏好
+  - RULE-SET,Marketing,🎯广告拦截
+
+  - MATCH,DIRECT
