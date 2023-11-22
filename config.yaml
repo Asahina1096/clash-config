@@ -3,7 +3,7 @@ allow-lan: true
 bind-address: '*'
 mode: rule
 log-level: info
-external-controller: '127.0.0.1:9090'
+external-controller: "127.0.0.1:9090"
 
 experimental: # experimental feature
   ignore-resolve-fail: true # ignore dns resolve fail, default value is true
@@ -30,8 +30,14 @@ dns:
     ipcidr: # ips in these subnets will be considered polluted
       - 240.0.0.0/4 
 
+tun:
+  enable: true
+  stack: system
+  auto-route: true
+  auto-detect-interface: true
+
 sniffer:
-  enable: false
+  enable: true
   force-dns-mapping: true
   parse-pure-ip: true
   override-destination: false
@@ -51,18 +57,32 @@ sniffer:
 use: &use
   type: select
   use:
-  - sub
+  - sub1
 
 proxy-providers:
-  sub: #组名
+  sub1: #组名
     type: http # url订阅的方式
     path: ./profiles/sub1.yml # 配置文件缓存的位置
-    url:   # 网络上配置文件的位置
+    url:  # 网络上配置文件的位置
     interval: 86400 # 自动更新时间
     health-check: # 健康检测，检测失败就不会在自动选择中用该组代理
       enable: true
-      url: http://www.gstatic.com/generate_204
-      interval: 3600 # 检测间隔
+      url: http://cp.cloudflare.com/
+      interval: 300 # 检测间隔
+
+proxies:
+  - name: example
+    type:
+    server:
+    port:
+    cipher: 
+    password:
+    udp: true
+    udp-over-tcp: true
+    health-check: # 健康检测，检测失败就不会在自动选择中用该组代理
+      enable: true
+      url: http://cp.cloudflare.com/
+      interval: 300 # 检测间隔
 
 proxy-groups:
 - name: "🛫海外流量"
@@ -79,69 +99,111 @@ proxy-groups:
     - "🇸🇬新加坡 Singapore"
     - "🇰🇷韩国  Korea"
     - "🗺️其它地区"
+    - "链式代理"
+    - DIRECT
+
+- name: "链式代理⛓️"
+  type: relay
+  proxies:
+    - "自建🏠"
+    - "Ready Boost⚡"
+
+- name: "自建🏠"
+  type: select
+  tolerance: 50
+  proxies:
+    - example
+
+- name: "Ready Boost⚡"
+  type: select
+  tolerance: 50
+  use:
+  - sub1
+  proxies:
+    - "⚡️Auto"
+    - "🇭🇰香港 HongKong"
+    - "🇹🇼台湾 TaiWan"
+    - "🇯🇵日本 Japan"
+    - "🇺🇸美国 USA"
+    - "🇬🇧英国 UK"
+    - "🇸🇬新加坡 Singapore"
+    - "🇰🇷韩国  Korea"
+    - "🗺️其它地区"
     - DIRECT
 
 - name: "⚡️Auto"
   type: url-test
   tolerance: 50
-  <<: *use
+  use:
+  - sub1
 
 - name: "👉🏻手动选择1"
   type: select
   tolerance: 50
-  <<: *use
+  use:
+  - sub1
 
 - name: "👉🏻手动选择2"
   type: select
   tolerance: 50
-  <<: *use
+  use:
+  - sub1
 
 #代理地区
 - name: "🇭🇰香港 HongKong"
   type: load-balance
-  <<: *use
+  use:
+  - sub1
   filter: "(?i)港|hk|hongkong|hong kong"
   strategy: consistent-hashing
 
 - name: "🇹🇼台湾 TaiWan"
   type: load-balance
-  <<: *use
+  use:
+  - sub1
   filter: "(?i)台|tw|taiwan"
   strategy: consistent-hashing
 
 - name: "🇯🇵日本 Japan"
   type: load-balance
-  <<: *use
+  use:
+  - sub1
   filter: "(?i)日本|jp|japan"
   strategy: consistent-hashing
 
 - name: "🇺🇸美国 USA"
   type: load-balance
-  <<: *use
+  use:
+  - sub1
   filter: "(?i)美|us|unitedstates|united states"
   strategy: consistent-hashing
 
 - name: "🇬🇧英国 UK"
   type: load-balance
-  <<: *use
+  use:
+  - sub1
   filter: "(?i)英|uk|unitedkingdom|united kingdom"
   strategy: consistent-hashing
 
 - name: "🇸🇬新加坡 Singapore"
   type: load-balance
-  <<: *use
+  use:
+  - sub1
   filter: "(?i)(新|sg|singapore)"
   strategy: consistent-hashing
 
 - name: "🇰🇷韩国  Korea"
   type: load-balance
-  <<: *use
+  use:
+  - sub1
   filter: "(?i)(韩|kr|korea)"
   strategy: consistent-hashing
 
 #clash premium内核不支持此特性
 - name: "🗺️其它地区"
-  <<: *use
+  type: select
+  use:
+  - sub1
   exclude-filter: "(?i)港|hk|hongkong|hong kong|台|tw|taiwan|日本|jp|japan|美|us|unitedstates|united states|新|sg|singapore|韩|kr|korea|英|uk|unitedkingdom|united kingdom"
 
 - name: "🐱Google"
@@ -381,7 +443,8 @@ proxy-groups:
     - "🗺️其它地区"
     - "👉🏻手动选择1"
     - "👉🏻手动选择2"
-  <<: *use
+  use:
+  - sub1
   filter: "(?i)港|hk|hongkong|hong kong|台|tw|taiwan"
 
 - name: "📺️哔哩哔哩东南亚"
@@ -394,12 +457,14 @@ proxy-groups:
 
 - name: "📺️巴哈姆特"
   type: select
-  <<: *use
+  use:
+  - sub1
   filter: "(?i)台|tw|taiwan"
 
 - name: "🥵Niconico"
   type: select
-  <<: *use
+  use:
+  - sub1
   filter: "(?i)日本|jp|japan"
 
 - name: "🥵EHentai"
@@ -701,7 +766,7 @@ rule-providers:
   EHentai:
     type: http
     behavior: classical
-    url: "https://cdn.jsdelivr.net/gh/alex177027/clash-meta-rules@v0.1/EHentai.yaml"
+    url: "https://cdn.jsdelivr.net/gh/alex177027/clash-meta-rules@latest/EHentai.yaml"
     path: ./ruleset/EHentai.yaml
     interval: 86400
 
@@ -764,7 +829,7 @@ rule-providers:
   AWAvenue:
     type: http
     behavior: domain
-    url: "https://cdn.jsdelivr.net/gh/alex177027/AWAvenue-Adblock-Rule@v0.1/AWAvenue-Adblock-Rule.yaml"
+    url: "https://cdn.jsdelivr.net/gh/alex177027/AWAvenue-Adblock-Rule@latest/AWAvenue-Adblock-Rule.yaml"
     path: ./ruleset/AWAvenue.yaml
     interval: 86400
 
@@ -787,10 +852,11 @@ rules:
   - RULE-SET,AdGuardSDNSFilter_Classical,🎯广告拦截
   - RULE-SET,BlockHttpDNS,🎯广告拦截
   - RULE-SET,AWAvenue,🎯广告拦截
-  - RULE-SET,Ad_Rule_Supplement🎯广告拦截
+  - RULE-SET,Ad_Rule_Supplement,🎯广告拦截
 
   #个人偏好
   - RULE-SET,Marketing,🎯广告拦截
+  - DOMAIN-SUFFIX,kox.moe,🛫海外流量
 
   #偷渡
   - RULE-SET,BiliBiliIntl,📺️哔哩哔哩东南亚
@@ -810,8 +876,6 @@ rules:
   - DOMAIN-SUFFIX,notion.so,DIRECT
   #Apple
   - RULE-SET,Apple,🍎苹果服务
-  #Google
-  - RULE-SET,Google,🐱Google
   #Telegram
   - RULE-SET,Telegram,✈️Telegram
   #Twitter
@@ -824,8 +888,6 @@ rules:
   - RULE-SET,Bing,🐳Microsoft
   #Amazon&PrimeVideo
   - RULE-SET,AmazonPrimeVideo,📼海外流媒体
-  - RULE-SET,Amazon,🦁Amazon
-  - RULE-SET,AmazonIP,🦁Amazon
 
   #Github
   - RULE-SET,Github,🧑‍💻Github
@@ -850,11 +912,15 @@ rules:
   #游戏
   - RULE-SET,GameDownloadCN,DIRECT #游戏下载
   - RULE-SET,Game,🕹️Game
-  #海外手游
-  - DOMAIN-SUFFIX,cq.hangame.com,🇰🇷韩国  Korea
   
   #CloudGlobal
   - RULE-SET,CloudGlobal,☁️CloudGlobal
+
+  - RULE-SET,Amazon,🦁Amazon
+  - RULE-SET,AmazonIP,🦁Amazon
+
+  #Google
+  - RULE-SET,Google,🐱Google
 
   #补充
   - RULE-SET,ChinaMax,DIRECT
