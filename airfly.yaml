@@ -65,55 +65,12 @@ proxy-providers:
       url: http://cp.cloudflare.com/
       interval: 300 # 检测间隔
 
-proxies:
-  - name: example
-    type:
-    server:
-    port:
-    cipher: 
-    password:
-    udp: true
-    udp-over-tcp: true
-    health-check: # 健康检测，检测失败就不会在自动选择中用该组代理
-      enable: true
-      url: http://cp.cloudflare.com/
-      interval: 300 # 检测间隔
-
 proxy-groups:
 - name: "🛫海外流量"
   type: select
   proxies:
-    - "链式代理⛓️"
     - "👉🏻手动选择1"
     - "👉🏻手动选择2"
-    - "🇭🇰香港 HongKong"
-    - "🇹🇼台湾 TaiWan"
-    - "🇯🇵日本 Japan"
-    - "🇺🇸美国 USA"
-    - "🇬🇧英国 UK"
-    - "🇸🇬新加坡 Singapore"
-    - "🇰🇷韩国  Korea"
-    - "🗺️其它地区"
-    - DIRECT
-
-- name: "链式代理⛓️"
-  type: relay
-  proxies:
-    - "Ready Boost⚡"
-    - "自建🏠"
-
-- name: "自建🏠"
-  type: select
-  tolerance: 50
-  proxies:
-    - example
-
-- name: "Ready Boost⚡"
-  type: select
-  tolerance: 50
-  use:
-  - sub1
-  proxies:
     - "🇭🇰香港 HongKong"
     - "🇹🇼台湾 TaiWan"
     - "🇯🇵日本 Japan"

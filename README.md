@@ -1,5 +1,7 @@
 # clash-meta-rules
 
+添加了去广告与常见分流的clash规则，配合clash-meta食用最佳
+
 ## 感谢以下项目
 
 ### 规则：
