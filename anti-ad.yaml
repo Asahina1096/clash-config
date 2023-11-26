@@ -54,6 +54,19 @@ sniffer:
   skip-domain:
     - Mijia Cloud
 
+proxies:
+  - name: example
+    type: ss
+    server: 127.0.0.1
+    port: 7777
+    password: 123456
+    udp: true
+    udp-over-tcp: true
+    health-check: # 健康检测，检测失败就不会在自动选择中用该组代理
+      enable: true
+      url: http://cp.cloudflare.com/
+      interval: 300 # 检测间隔
+
 proxy-groups:
 - name: "🎯广告拦截"
   type: select
