@@ -1,0 +1,746 @@
+mixed-port: 7890
+allow-lan: false
+bind-address: '*'
+mode: rule
+log-level: info
+external-controller: "127.0.0.1:9090"
+
+experimental: # experimental feature
+  ignore-resolve-fail: true # ignore dns resolve fail, default value is true
+
+hosts:
+  '*.clash.dev': '127.0.0.1'
+  'alpha.clash.dev': '::1'
+  '*.notion.so': '119.28.13.121' #notion
+
+dns:
+  enable: true # set true to enable dns (default is false)
+  ipv6: false # default is false
+  listen: 0.0.0.0:53
+  enhanced-mode: fake-ip # or redir-host
+  fake-ip-range: 198.18.0.1/16 # if you don't know what it is, don't change it
+  nameserver:
+    - https://doh.pub/dns-query
+    - https://dns.alidns.com
+  fallback: # concurrent request with nameserver, fallback used when GEOIP country isn't CN
+    - https://8.8.8.8/dns-query
+    - https://1.1.1.1/dns-query
+  fallback-filter:
+    geoip: true # default
+    ipcidr: # ips in these subnets will be considered polluted
+      - 240.0.0.0/4 
+
+tun:
+  enable: true
+  stack: system
+  auto-route: true
+  auto-detect-interface: true
+
+sniffer:
+  enable: true
+  force-dns-mapping: true
+  parse-pure-ip: true
+  override-destination: false
+  sniff:
+    HTTP:
+      ports: [80, 8080-8880]
+      override-destination: true
+    TLS:
+      ports: [443, 8443]
+  force-domain:
+  skip-domain:
+    - Mijia Cloud
+
+proxy-providers:
+  sub1: #组名
+    type: http # url订阅的方式
+    path: ./profiles/sub1.yml # 配置文件缓存的位置
+    url:  # 网络上配置文件的位置
+    interval: 86400 # 自动更新时间
+    health-check: # 健康检测，检测失败就不会在自动选择中用该组代理
+      enable: true
+      url: http://cp.cloudflare.com/
+      interval: 300 # 检测间隔
+
+proxies:
+  - name: example
+    type:
+    server:
+    port:
+    cipher: 
+    password:
+    udp: true
+    udp-over-tcp: true
+    health-check: # 健康检测，检测失败就不会在自动选择中用该组代理
+      enable: true
+      url: http://cp.cloudflare.com/
+      interval: 300 # 检测间隔
+
+proxy-groups:
+- name: "🛫海外流量"
+  type: select
+  proxies:
+    - "链式代理⛓️"
+    - "🇭🇰香港 HongKong"
+    - "🇹🇼台湾 TaiWan"
+    - "🇯🇵日本 Japan"
+    - "🇺🇸美国 USA"
+    - "🇬🇧英国 UK"
+    - "🇸🇬新加坡 Singapore"
+    - "🇰🇷韩国  Korea"
+    - "🗺️其它地区"
+    - DIRECT
+
+- name: "链式代理⛓️"
+  type: relay
+  proxies:
+    - "Ready Boost⚡"
+    - "自建🏠"
+
+- name: "自建🏠"
+  type: select
+  tolerance: 50
+  proxies:
+    - example
+
+- name: "Ready Boost⚡"
+  type: select
+  tolerance: 50
+  use:
+  - sub1
+  proxies:
+    - "🇭🇰香港 HongKong"
+    - "🇹🇼台湾 TaiWan"
+    - "🇯🇵日本 Japan"
+    - "🇺🇸美国 USA"
+    - "🇬🇧英国 UK"
+    - "🇸🇬新加坡 Singapore"
+    - "🇰🇷韩国  Korea"
+    - "🗺️其它地区"
+    - DIRECT
+
+#代理地区
+- name: "🇭🇰香港 HongKong"
+  type: select
+  use:
+  - sub1
+  filter: "(?i)港|hk|hongkong|hong kong"
+  strategy: consistent-hashing
+
+- name: "🇹🇼台湾 TaiWan"
+  type: select
+  use:
+  - sub1
+  filter: "(?i)台|tw|taiwan"
+  strategy: consistent-hashing
+
+- name: "🇯🇵日本 Japan"
+  type: select
+  use:
+  - sub1
+  filter: "(?i)日本|jp|japan"
+  strategy: consistent-hashing
+
+- name: "🇺🇸美国 USA"
+  type: select
+  use:
+  - sub1
+  filter: "(?i)美|us|unitedstates|united states"
+  strategy: consistent-hashing
+
+- name: "🇬🇧英国 UK"
+  type: select
+  use:
+  - sub1
+  filter: "(?i)英|uk|unitedkingdom|united kingdom"
+  strategy: consistent-hashing
+
+- name: "🇸🇬新加坡 Singapore"
+  type: select
+  use:
+  - sub1
+  filter: "(?i)(新|sg|singapore)"
+  strategy: consistent-hashing
+
+- name: "🇰🇷韩国  Korea"
+  type: select
+  use:
+  - sub1
+  filter: "(?i)(韩|kr|korea)"
+  strategy: consistent-hashing
+
+#clash premium内核不支持此特性
+- name: "🗺️其它地区"
+  type: select
+  use:
+  - sub1
+  exclude-filter: "(?i)港|hk|hongkong|hong kong|台|tw|taiwan|日本|jp|japan|美|us|unitedstates|united states|新|sg|singapore|韩|kr|korea|英|uk|unitedkingdom|united kingdom"
+
+- name: "🐱Google"
+  type: select
+  proxies:
+    - "🛫海外流量"
+    - "🇭🇰香港 HongKong"
+    - "🇹🇼台湾 TaiWan"
+    - "🇯🇵日本 Japan"
+    - "🇺🇸美国 USA"
+    - "🇸🇬新加坡 Singapore"
+    - "🇰🇷韩国  Korea"
+    - "🇬🇧英国 UK"
+    - "🗺️其它地区"
+    - "👉🏻手动选择1"
+    - "👉🏻手动选择2"
+
+- name: "🐳Microsoft"
+  type: select
+  proxies:
+    - "🛫海外流量"
+    - "🇭🇰香港 HongKong"
+    - "🇹🇼台湾 TaiWan"
+    - "🇯🇵日本 Japan"
+    - "🇺🇸美国 USA"
+    - "🇸🇬新加坡 Singapore"
+    - "🇰🇷韩国  Korea"
+    - "🇬🇧英国 UK"
+    - "🗺️其它地区"
+    - "👉🏻手动选择1"
+    - "👉🏻手动选择2"
+    - DIRECT
+
+- name: "🍎苹果服务"
+  type: select
+  proxies:
+    - DIRECT
+    - "🛫海外流量"
+    - "🇭🇰香港 HongKong"
+    - "🇹🇼台湾 TaiWan"
+    - "🇯🇵日本 Japan"
+    - "🇺🇸美国 USA"
+    - "🇸🇬新加坡 Singapore"
+    - "🇰🇷韩国  Korea"
+    - "🇬🇧英国 UK"
+    - "🗺️其它地区"
+    - "👉🏻手动选择1"
+    - "👉🏻手动选择2"
+
+- name: "🦁Amazon"
+  type: select
+  proxies:
+    - DIRECT
+    - "🛫海外流量"
+    - "🇭🇰香港 HongKong"
+    - "🇹🇼台湾 TaiWan"
+    - "🇯🇵日本 Japan"
+    - "🇺🇸美国 USA"
+    - "🇸🇬新加坡 Singapore"
+    - "🇰🇷韩国  Korea"
+    - "🇬🇧英国 UK"
+    - "🗺️其它地区"
+    - "👉🏻手动选择1"
+    - "👉🏻手动选择2"
+
+- name: "🧜‍♀️OpenAI"
+  type: select
+  proxies:
+    - "🛫海外流量"
+    - "🇭🇰香港 HongKong"
+    - "🇹🇼台湾 TaiWan"
+    - "🇯🇵日本 Japan"
+    - "🇺🇸美国 USA"
+    - "🇸🇬新加坡 Singapore"
+    - "🇰🇷韩国  Korea"
+    - "🇬🇧英国 UK"
+    - "🗺️其它地区"
+    - "👉🏻手动选择1"
+    - "👉🏻手动选择2"
+
+- name: "🧑‍💻Github"
+  type: select
+  proxies:
+    - "🛫海外流量"
+    - "🇭🇰香港 HongKong"
+    - "🇹🇼台湾 TaiWan"
+    - "🇯🇵日本 Japan"
+    - "🇺🇸美国 USA"
+    - "🇸🇬新加坡 Singapore"
+    - "🇰🇷韩国  Korea"
+    - "🇬🇧英国 UK"
+    - "🗺️其它地区"
+    - "👉🏻手动选择1"
+    - "👉🏻手动选择2"
+
+- name: "☁️CloudGlobal"
+  type: select
+  proxies:
+    - "🛫海外流量"
+    - "🇭🇰香港 HongKong"
+    - "🇹🇼台湾 TaiWan"
+    - "🇯🇵日本 Japan"
+    - "🇺🇸美国 USA"
+    - "🇸🇬新加坡 Singapore"
+    - "🇰🇷韩国  Korea"
+    - "🇬🇧英国 UK"
+    - "🗺️其它地区"
+    - "👉🏻手动选择1"
+    - "👉🏻手动选择2"
+
+- name: "🕹️Game"
+  type: select
+  proxies:
+    - DIRECT
+    - "🛫海外流量"
+    - "🇭🇰香港 HongKong"
+    - "🇹🇼台湾 TaiWan"
+    - "🇯🇵日本 Japan"
+    - "🇺🇸美国 USA"
+    - "🇸🇬新加坡 Singapore"
+    - "🇰🇷韩国  Korea"
+    - "🇬🇧英国 UK"
+    - "🗺️其它地区"
+    - "👉🏻手动选择1"
+    - "👉🏻手动选择2"
+
+- name: "✈️Telegram"
+  type: select
+  proxies:
+    - "🛫海外流量"
+    - "🇭🇰香港 HongKong"
+    - "🇹🇼台湾 TaiWan"
+    - "🇯🇵日本 Japan"
+    - "🇺🇸美国 USA"
+    - "🇸🇬新加坡 Singapore"
+    - "🇰🇷韩国  Korea"
+    - "🇬🇧英国 UK"
+    - "🗺️其它地区"
+    - "👉🏻手动选择1"
+    - "👉🏻手动选择2"
+
+- name: "🐦Twitter"
+  type: select
+  proxies:
+    - "🛫海外流量"
+    - "🇭🇰香港 HongKong"
+    - "🇹🇼台湾 TaiWan"
+    - "🇯🇵日本 Japan"
+    - "🇺🇸美国 USA"
+    - "🇸🇬新加坡 Singapore"
+    - "🇰🇷韩国  Korea"
+    - "🇬🇧英国 UK"
+    - "🗺️其它地区"
+    - "👉🏻手动选择1"
+    - "👉🏻手动选择2"
+
+- name: "💃TikTok"
+  type: select
+  proxies:
+    - "🛫海外流量"
+    - "🇭🇰香港 HongKong"
+    - "🇹🇼台湾 TaiWan"
+    - "🇯🇵日本 Japan"
+    - "🇺🇸美国 USA"
+    - "🇸🇬新加坡 Singapore"
+    - "🇰🇷韩国  Korea"
+    - "🇬🇧英国 UK"
+    - "🗺️其它地区"
+    - "👉🏻手动选择1"
+    - "👉🏻手动选择2"
+
+- name: "📹️YouTube"
+  type: select
+  proxies:
+    - "🛫海外流量"
+    - "🇭🇰香港 HongKong"
+    - "🇹🇼台湾 TaiWan"
+    - "🇯🇵日本 Japan"
+    - "🇺🇸美国 USA"
+    - "🇸🇬新加坡 Singapore"
+    - "🇰🇷韩国  Korea"
+    - "🇬🇧英国 UK"
+    - "🗺️其它地区"
+    - "👉🏻手动选择1"
+    - "👉🏻手动选择2"
+
+- name: "📼海外流媒体"
+  type: select
+  proxies:
+    - "🛫海外流量"
+    - "🇭🇰香港 HongKong"
+    - "🇹🇼台湾 TaiWan"
+    - "🇯🇵日本 Japan"
+    - "🇺🇸美国 USA"
+    - "🇸🇬新加坡 Singapore"
+    - "🇰🇷韩国  Korea"
+    - "🇬🇧英国 UK"
+    - "🗺️其它地区"
+    - "👉🏻手动选择1"
+    - "👉🏻手动选择2"
+
+- name: "🎧️Spotify"
+  type: select
+  proxies:
+    - "🛫海外流量"
+    - "🇭🇰香港 HongKong"
+    - "🇹🇼台湾 TaiWan"
+    - "🇯🇵日本 Japan"
+    - "🇺🇸美国 USA"
+    - "🇸🇬新加坡 Singapore"
+    - "🇰🇷韩国  Korea"
+    - "🇬🇧英国 UK"
+    - "🗺️其它地区"
+    - "👉🏻手动选择1"
+    - "👉🏻手动选择2"
+
+- name: "📺️哔哩哔哩"
+  type: select
+  proxies:
+    - DIRECT
+    - "🗺️其它地区"
+    - "👉🏻手动选择1"
+    - "👉🏻手动选择2"
+  use:
+  - sub1
+  filter: "(?i)港|hk|hongkong|hong kong|台|tw|taiwan"
+
+- name: "📺️哔哩哔哩东南亚"
+  type: select
+  proxies:
+    - "🛫海外流量"
+    - "🇸🇬新加坡 Singapore"
+    - "🗺️其它地区"
+    - "👉🏻手动选择1"
+    - "👉🏻手动选择2"
+
+- name: "📺️巴哈姆特"
+  type: select
+  use:
+  - sub1
+  filter: "(?i)台|tw|taiwan"
+  proxies:
+  - "🛫海外流量"
+
+- name: "🥵Niconico"
+  type: select
+  use:
+  - sub1
+  filter: "(?i)日本|jp|japan"
+  proxies:
+  - "🛫海外流量"
+
+- name: "🥵EHentai"
+  type: select
+  proxies:
+    - "🛫海外流量"
+    - "🇭🇰香港 HongKong"
+    - "🇹🇼台湾 TaiWan"
+    - "🇺🇸美国 USA"
+    - "🇸🇬新加坡 Singapore"
+    - "🇰🇷韩国  Korea"
+    - "🇬🇧英国 UK"
+    - "🗺️其它地区"
+    - "👉🏻手动选择1"
+    - "👉🏻手动选择2"
+
+- name: "🎯广告拦截"
+  type: select
+  proxies:
+    - REJECT
+    - DIRECT
+
+- name: "🐟️漏网之鱼"
+  type: select
+  proxies:
+    - "🛫海外流量"
+    - "👉🏻手动选择1"
+    - "👉🏻手动选择2"
+    - DIRECT
+
+geodata-mode: true
+geox-url:
+  geoip: "https://fastly.jsdelivr.net/gh/MetaCubeX/meta-rules-dat@release/geoip.dat"
+  geosite: "https://fastly.jsdelivr.net/gh/MetaCubeX/meta-rules-dat@release/geosite.dat"
+  mmdb: "https://fastly.jsdelivr.net/gh/MetaCubeX/meta-rules-dat@release/country.mmdb"
+
+rule-providers:
+  Marketing: #思杰马克丁软件
+    type: http
+    behavior: classical
+    url: "https://cdn.jsdelivr.net/gh/blackmatrix7/ios_rule_script@master/rule/Clash/Marketing/Marketing.yaml"
+    path: ./ruleset/Marketing.yaml
+    interval: 86400
+
+  ChinaMax:
+    type: http
+    behavior: classical
+    url: "https://cdn.jsdelivr.net/gh/blackmatrix7/ios_rule_script@master/rule/Clash/ChinaMax/ChinaMax_Classical.yaml"
+    path: ./ruleset/ChinaMax.yaml
+    interval: 86400
+
+#海外服务
+  Google: 
+    type: http
+    behavior: classical
+    url: "https://cdn.jsdelivr.net/gh/blackmatrix7/ios_rule_script@master/rule/Clash/Google/Google.yaml"
+    path: ./ruleset/Google.yaml
+    interval: 86400
+
+  Apple:
+    type: http
+    behavior: classical
+    url: "https://cdn.jsdelivr.net/gh/blackmatrix7/ios_rule_script@master/rule/Clash/Apple/Apple_Classical.yaml"
+    path: ./ruleset/Apple.yaml
+    interval: 86400
+
+  Microsoft:
+    type: http
+    behavior: classical
+    url: "https://cdn.jsdelivr.net/gh/blackmatrix7/ios_rule_script@master/rule/Clash/Microsoft/Microsoft.yaml"
+    path: ./ruleset/Microsoft.yaml
+    interval: 86400
+
+  Amazon:
+    type: http
+    behavior: classical
+    url: "https://cdn.jsdelivr.net/gh/blackmatrix7/ios_rule_script@master/rule/Clash/Amazon/Amazon.yaml"
+    path: ./ruleset/Amazon.yaml
+    interval: 86400
+
+  AmazonIP:
+    type: http
+    behavior: ipcidr
+    url: "https://cdn.jsdelivr.net/gh/blackmatrix7/ios_rule_script@master/rule/Clash/AmazonIP/AmazonIP_IP.yaml"
+    path: ./ruleset/AmazonIP.yaml
+    interval: 86400
+
+  Bing:
+    type: http
+    behavior: classical
+    url: "https://cdn.jsdelivr.net/gh/blackmatrix7/ios_rule_script@master/rule/Clash/Bing/Bing.yaml"
+    path: ./ruleset/Bing.yaml
+    interval: 86400
+
+  OpenAI:
+    type: http
+    behavior: classical
+    url: "https://cdn.jsdelivr.net/gh/blackmatrix7/ios_rule_script@master/rule/Clash/OpenAI/OpenAI.yaml"
+    path: ./ruleset/OpenAI.yaml
+    interval: 86400
+
+  Github:
+    type: http
+    behavior: classical
+    url: "https://cdn.jsdelivr.net/gh/blackmatrix7/ios_rule_script@master/rule/Clash/GitHub/GitHub.yaml"
+    path: ./ruleset/Github.yaml
+    interval: 86400
+
+  YouTube:
+    type: http
+    behavior: classical
+    url: "https://cdn.jsdelivr.net/gh/blackmatrix7/ios_rule_script@master/rule/Clash/YouTube/YouTube.yaml"
+    path: ./ruleset/YouTube.yaml
+    interval: 86400
+
+  YouTubeMusic:
+    type: http
+    behavior: classical
+    url: "https://cdn.jsdelivr.net/gh/blackmatrix7/ios_rule_script@master/rule/Clash/YouTubeMusic/YouTubeMusic.yaml"
+    path: ./ruleset/YouTubeMusic.yaml
+    interval: 86400
+
+  Netflix:
+    type: http
+    behavior: classical
+    url: "https://cdn.jsdelivr.net/gh/blackmatrix7/ios_rule_script@master/rule/Clash/Netflix/Netflix_Classical.yaml"
+    path: ./ruleset/Netflix.yaml
+    interval: 86400
+
+  Discovery:
+    type: http
+    behavior: classical
+    url: "https://cdn.jsdelivr.net/gh/blackmatrix7/ios_rule_script@master/rule/Clash/Disney/Disney.yaml"
+    path: ./ruleset/Discovery.yaml
+    interval: 86400
+
+  AmazonPrimeVideo:
+    type: http
+    behavior: classical
+    url: "https://cdn.jsdelivr.net/gh/blackmatrix7/ios_rule_script@master/rule/Clash/AmazonPrimeVideo/AmazonPrimeVideo.yaml"
+    path: ./ruleset/AmazonPrimeVideo.yaml
+    interval: 86400
+
+  Hulu:
+    type: http
+    behavior: classical
+    url: "https://cdn.jsdelivr.net/gh/blackmatrix7/ios_rule_script@master/rule/Clash/Hulu/Hulu.yaml"
+    path: ./ruleset/Hulu.yaml
+    interval: 86400
+
+  HBO:
+    type: http
+    behavior: classical
+    url: "https://cdn.jsdelivr.net/gh/blackmatrix7/ios_rule_script@master/rule/Clash/HBO/HBO.yaml"
+    path: ./ruleset/HBO.yaml
+    interval: 86400
+
+  Pandora:
+    type: http
+    behavior: classical
+    url: "https://cdn.jsdelivr.net/gh/blackmatrix7/ios_rule_script@master/rule/Clash/Pandora/Pandora.yaml"
+    path: ./ruleset/Pandora.yaml
+    interval: 86400
+
+  Spotify:
+    type: http
+    behavior: classical
+    url: "https://cdn.jsdelivr.net/gh/blackmatrix7/ios_rule_script@master/rule/Clash/Spotify/Spotify.yaml"
+    path: ./ruleset/Spotify.yaml
+    interval: 86400
+
+  Bahamut:
+    type: http
+    behavior: classical
+    url: "https://cdn.jsdelivr.net/gh/blackmatrix7/ios_rule_script@master/rule/Clash/Bahamut/Bahamut.yaml"
+    path: ./ruleset/Bahamut.yaml
+    interval: 86400
+
+  Telegram:
+    type: http
+    behavior: classical
+    url: "https://cdn.jsdelivr.net/gh/blackmatrix7/ios_rule_script@master/rule/Clash/Telegram/Telegram.yaml"
+    path: ./ruleset/Telegram.yaml
+    interval: 86400
+
+  Twitter:
+    type: http
+    behavior: classical
+    url: "https://cdn.jsdelivr.net/gh/blackmatrix7/ios_rule_script@master/rule/Clash/Twitter/Twitter.yaml"
+    path: ./ruleset/Twitter.yaml
+    interval: 86400
+
+  Pixiv:
+    type: http
+    behavior: classical
+    url: "https://cdn.jsdelivr.net/gh/blackmatrix7/ios_rule_script@master/rule/Clash/Pixiv/Pixiv.yaml"
+    path: ./ruleset/Pixiv.yaml
+    interval: 86400
+
+  BiliBili:
+    type: http
+    behavior: classical
+    url: "https://cdn.jsdelivr.net/gh/blackmatrix7/ios_rule_script@master/rule/Clash/BiliBili/BiliBili.yaml"
+    path: ./ruleset/BiliBili.yaml
+    interval: 86400
+
+  EHentai:
+    type: http
+    behavior: classical
+    url: "https://cdn.jsdelivr.net/gh/alex177027/clash-meta-rules@latest/EHentai.yaml"
+    path: ./ruleset/EHentai.yaml
+    interval: 86400
+
+  Niconico:
+    type: http
+    behavior: classical
+    url: "https://cdn.jsdelivr.net/gh/blackmatrix7/ios_rule_script@master/rule/Clash/Niconico/Niconico.yaml"
+    path: ./ruleset/Niconico.yaml
+    interval: 86400
+
+  BiliBiliIntl:
+    type: http
+    behavior: classical
+    url: "https://cdn.jsdelivr.net/gh/blackmatrix7/ios_rule_script@master/rule/Clash/BiliBiliIntl/BiliBiliIntl.yaml"
+    path: ./ruleset/BiliBiliIntl.yaml
+    interval: 86400
+
+  TikTok:
+    type: http
+    behavior: classical
+    url: "https://cdn.jsdelivr.net/gh/blackmatrix7/ios_rule_script@master/rule/Clash/TikTok/TikTok.yaml"
+    path: ./ruleset/TikTok.yaml
+    interval: 86400
+
+  Discord:
+    type: http
+    behavior: classical
+    url: "https://cdn.jsdelivr.net/gh/blackmatrix7/ios_rule_script@master/rule/Clash/Discord/Discord.yaml"
+    path: ./ruleset/Discord.yaml
+    interval: 86400  
+
+  AWAvenue:
+    type: http
+    behavior: domain
+    url: "https://cdn.jsdelivr.net/gh/alex177027/AWAvenue-Adblock-Rule@v0.1.1/AWAvenue-Adblock-Rule.yaml"
+    path: ./ruleset/AWAvenue.yaml
+    interval: 86400
+
+  Ad_Rule_Supplement:
+    type: http
+    behavior: classical
+    url: "https://raw.githubusercontent.com/alex177027/clash-rules/main/Supplement.yaml"
+    path: ./ruleset/Supplement.yaml
+    interval: 86400
+
+rules:
+  #广告域名
+  - RULE-SET,AWAvenue,🎯广告拦截
+  - RULE-SET,Ad_Rule_Supplement,🎯广告拦截
+
+  #个人偏好
+  - RULE-SET,Marketing,🎯广告拦截
+  - DOMAIN-SUFFIX,kox.moe,🛫海外流量
+
+  #偷渡
+  - RULE-SET,BiliBiliIntl,📺️哔哩哔哩东南亚
+  - RULE-SET,BiliBili,📺️哔哩哔哩
+
+  #国外服务
+  - RULE-SET,EHentai,🥵EHentai #EHentai
+  - RULE-SET,Pixiv,🛫海外流量
+  - RULE-SET,Niconico,🥵Niconico
+  - RULE-SET,Discord,🛫海外流量
+  #Notion
+  - DOMAIN-SUFFIX,notion.so,DIRECT
+  #Apple
+  - RULE-SET,Apple,🍎苹果服务
+  #Telegram
+  - RULE-SET,Telegram,✈️Telegram
+  #Twitter
+  - RULE-SET,Twitter,🐦Twitter
+  - RULE-SET,TikTok,💃TikTok
+  # OpenAI (ChatGPT)
+  - RULE-SET,OpenAI,🧜‍♀️OpenAI
+  # Microsoft
+  - RULE-SET,Bing,🐳Microsoft
+  - RULE-SET,Microsoft,🐳Microsoft
+  #Amazon&PrimeVideo
+  - RULE-SET,AmazonPrimeVideo,📼海外流媒体
+
+  #Github
+  - RULE-SET,Github,🧑‍💻Github
+
+  #海外流媒体
+  - RULE-SET,YouTube,📹️YouTube
+  - RULE-SET,YouTubeMusic,📹️YouTube
+  #Netflix
+  - RULE-SET,Netflix,📼海外流媒体
+  #Disney+
+  - RULE-SET,Discovery,📼海外流媒体
+  #Hulu
+  - RULE-SET,Hulu,📼海外流媒体
+  #HBO
+  - RULE-SET,HBO,📼海外流媒体
+  #Pandora
+  - RULE-SET,Pandora,📼海外流媒体
+  #Spotify
+  - RULE-SET,Spotify,🎧️Spotify
+  #巴哈姆特
+  - RULE-SET,Bahamut,📺️巴哈姆特  
+
+  - RULE-SET,Amazon,🦁Amazon
+  - RULE-SET,AmazonIP,🦁Amazon
+  #Google
+  - RULE-SET,Google,🐱Google
+
+  #补充
+  - RULE-SET,ChinaMax,DIRECT
+  - GEOIP,CN,DIRECT
+  - MATCH,🐟️漏网之鱼
