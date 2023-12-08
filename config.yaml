@@ -1,1046 +1,630 @@
-# port: 7890 # HTTP(S) 代理服务器端口
-# socks-port: 7891 # SOCKS5 代理端口
-mixed-port: 10801 # HTTP(S) 和 SOCKS 代理混合端口
-# redir-port: 7892 # 透明代理端口，用于 Linux 和 MacOS
-
-# Transparent proxy server port for Linux (TProxy TCP and TProxy UDP)
-# tproxy-port: 7893
-
-allow-lan: true # 允许局域网连接
-bind-address: "*" # 绑定 IP 地址，仅作用于 allow-lan 为 true，'*'表示所有地址
-authentication: # http,socks入口的验证用户名，密码
-  - "username:password"
-skip-auth-prefixes: # 设置跳过验证的IP段
-  - 127.0.0.1/8
-  - ::1/128
-
-#  find-process-mode has 3 values:always, strict, off
-#  - always, 开启，强制匹配所有进程
-#  - strict, 默认，由 mihomo 判断是否开启
-#  - off, 不匹配进程，推荐在路由器上使用此模式
-find-process-mode: strict
-
+mixed-port: 7890
+allow-lan: false
+bind-address: '*'
 mode: rule
+log-level: info
+external-controller: "127.0.0.1:9090"
 
-#自定义 geodata url
+experimental: # experimental feature
+  ignore-resolve-fail: true # ignore dns resolve fail, default value is true
+
+hosts:
+  '*.clash.dev': '127.0.0.1'
+  'alpha.clash.dev': '::1'
+
+dns:
+  enable: true # set true to enable dns (default is false)
+  prefer-h3: true
+  ipv6: false # default is false
+  listen: 0.0.0.0:53
+  enhanced-mode: fake-ip # or redir-host
+  store-fake-ip: false
+  fake-ip-range: 198.18.0.1/16 # if you don't know what it is, don't change it
+  nameserver:
+    - https://doh.pub/dns-query
+    - https://dns.alidns.com
+  fallback: # concurrent request with nameserver, fallback used when GEOIP country isn't CN
+    - https://8.8.8.8/dns-query
+    - https://1.1.1.1/dns-query
+  fallback-filter:
+    geoip: true # default
+    geoip-code: CN
+    geosite:
+      - gfw
+    ipcidr:
+      - 240.0.0.0/4
+
+tun:
+  enable: true
+  stack: system
+  dns-hijack:
+    - 0.0.0.0:53 # 需要劫持的 DNS
+  auto-detect-interface: true
+  auto-route: true
+  strict-route: true
+
+sniffer:
+  enable: true
+  force-dns-mapping: true
+  parse-pure-ip: true
+  override-destination: false
+  sniff:
+    HTTP:
+      ports: [80, 8080-8880]
+      override-destination: true
+    TLS:
+      ports: [443, 8443]
+  force-domain:
+    - +.v2ex.com
+  skip-domain:
+    - Mijia Cloud
+
+proxy-providers:
+  sub1: #组名
+    type: http # url订阅的方式
+    path: ./profiles/sub1.yml # 配置文件缓存的位置
+    url: # 网络上配置文件的位置
+    interval: 86400 # 自动更新时间
+    health-check: # 健康检测，检测失败就不会在自动选择中用该组代理
+      enable: true
+      url: https://cp.cloudflare.com/
+      interval: 300 # 检测间隔
+
+proxies:
+  - name: example
+    type: ss
+    server: 
+    port: 
+    cipher: aes-128-gcm
+    password: 
+    udp: true
+    udp-over-tcp: true
+    health-check: # 健康检测，检测失败就不会在自动选择中用该组代理
+      enable: true
+      url: https://cp.cloudflare.com/
+      interval: 300 # 检测间隔
+
+proxy-groups:
+- name: "🛫海外流量"
+  type: select
+  proxies:
+    - "链式代理⛓️"
+    - "🇭🇰香港 HongKong"
+    - "🇹🇼台湾 TaiWan"
+    - "🇯🇵日本 Japan"
+    - "🇺🇸美国 USA"
+    - "🇬🇧英国 UK"
+    - "🇸🇬新加坡 Singapore"
+    - "🇰🇷韩国  Korea"
+    - "🗺️其它地区"
+    - DIRECT
+
+- name: "链式代理⛓️"
+  type: relay
+  proxies:
+    - "Ready Boost⚡"
+    - "自建🏠"
+
+- name: "自建🏠"
+  type: select
+  tolerance: 50
+  proxies:
+  - example
+
+- name: "Ready Boost⚡"
+  type: select
+  tolerance: 50
+  proxies:
+    - "🇭🇰香港 HongKong"
+    - "🇹🇼台湾 TaiWan"
+    - "🇯🇵日本 Japan"
+    - "🇺🇸美国 USA"
+    - "🇬🇧英国 UK"
+    - "🇸🇬新加坡 Singapore"
+    - "🇰🇷韩国  Korea"
+    - "🗺️其它地区"
+    - DIRECT
+
+#代理地区
+- name: "🇭🇰香港 HongKong"
+  type: select
+  use:
+  - sub1
+  filter: "(?i)港|hk|hongkong|hong kong"
+  strategy: consistent-hashing
+
+- name: "🇹🇼台湾 TaiWan"
+  type: select
+  use:
+  - sub1
+  filter: "(?i)台|tw|taiwan"
+  strategy: consistent-hashing
+
+- name: "🇯🇵日本 Japan"
+  type: select
+  use:
+  - sub1
+  filter: "(?i)日本|jp|japan"
+  strategy: consistent-hashing
+
+- name: "🇺🇸美国 USA"
+  type: select
+  use:
+  - sub1
+  filter: "(?i)美|us|unitedstates|united states"
+  strategy: consistent-hashing
+
+- name: "🇬🇧英国 UK"
+  type: select
+  use:
+  - sub1
+  filter: "(?i)英|uk|unitedkingdom|united kingdom"
+  strategy: consistent-hashing
+
+- name: "🇸🇬新加坡 Singapore"
+  type: select
+  use:
+  - sub1
+  filter: "(?i)(新|sg|singapore)"
+  strategy: consistent-hashing
+
+- name: "🇰🇷韩国  Korea"
+  type: select
+  use:
+  - sub1
+  filter: "(?i)(韩|kr|korea)"
+  strategy: consistent-hashing
+
+#clash premium内核不支持此特性
+- name: "🗺️其它地区"
+  type: select
+  use:
+  - sub1
+  exclude-filter: "(?i)港|hk|hongkong|hong kong|台|tw|taiwan|日本|jp|japan|美|us|unitedstates|united states|新|sg|singapore|韩|kr|korea|英|uk|unitedkingdom|united kingdom"
+
+- name: "🐱Google"
+  type: select
+  proxies:
+    - "🛫海外流量"
+    - "🇭🇰香港 HongKong"
+    - "🇹🇼台湾 TaiWan"
+    - "🇯🇵日本 Japan"
+    - "🇺🇸美国 USA"
+    - "🇸🇬新加坡 Singapore"
+    - "🇰🇷韩国  Korea"
+    - "🇬🇧英国 UK"
+    - "🗺️其它地区"
+
+- name: "🐳Microsoft"
+  type: select
+  proxies:
+    - "🛫海外流量"
+    - "🇭🇰香港 HongKong"
+    - "🇹🇼台湾 TaiWan"
+    - "🇯🇵日本 Japan"
+    - "🇺🇸美国 USA"
+    - "🇸🇬新加坡 Singapore"
+    - "🇰🇷韩国  Korea"
+    - "🇬🇧英国 UK"
+    - "🗺️其它地区"
+    - DIRECT
+
+- name: "🍎苹果服务"
+  type: select
+  proxies:
+    - DIRECT
+    - "🛫海外流量"
+    - "🇭🇰香港 HongKong"
+    - "🇹🇼台湾 TaiWan"
+    - "🇯🇵日本 Japan"
+    - "🇺🇸美国 USA"
+    - "🇸🇬新加坡 Singapore"
+    - "🇰🇷韩国  Korea"
+    - "🇬🇧英国 UK"
+    - "🗺️其它地区"
+
+- name: "🧜‍♀️OpenAI"
+  type: select
+  proxies:
+    - "🛫海外流量"
+    - "🇭🇰香港 HongKong"
+    - "🇹🇼台湾 TaiWan"
+    - "🇯🇵日本 Japan"
+    - "🇺🇸美国 USA"
+    - "🇸🇬新加坡 Singapore"
+    - "🇰🇷韩国  Korea"
+    - "🇬🇧英国 UK"
+    - "🗺️其它地区"
+
+- name: "✈️Telegram"
+  type: select
+  proxies:
+    - "🛫海外流量"
+    - "🇭🇰香港 HongKong"
+    - "🇹🇼台湾 TaiWan"
+    - "🇯🇵日本 Japan"
+    - "🇺🇸美国 USA"
+    - "🇸🇬新加坡 Singapore"
+    - "🇰🇷韩国  Korea"
+    - "🇬🇧英国 UK"
+    - "🗺️其它地区"
+
+- name: "💃TikTok"
+  type: select
+  proxies:
+    - "🛫海外流量"
+    - "🇭🇰香港 HongKong"
+    - "🇹🇼台湾 TaiWan"
+    - "🇯🇵日本 Japan"
+    - "🇺🇸美国 USA"
+    - "🇸🇬新加坡 Singapore"
+    - "🇰🇷韩国  Korea"
+    - "🇬🇧英国 UK"
+    - "🗺️其它地区"
+
+- name: "📼海外流媒体"
+  type: select
+  proxies:
+    - "🛫海外流量"
+    - "🇭🇰香港 HongKong"
+    - "🇹🇼台湾 TaiWan"
+    - "🇯🇵日本 Japan"
+    - "🇺🇸美国 USA"
+    - "🇸🇬新加坡 Singapore"
+    - "🇰🇷韩国  Korea"
+    - "🇬🇧英国 UK"
+    - "🗺️其它地区"
+
+- name: "📺️哔哩哔哩"
+  type: select
+  proxies:
+    - DIRECT
+    - "🗺️其它地区"
+  use:
+  - sub1
+  filter: "(?i)港|hk|hongkong|hong kong|台|tw|taiwan"
+
+- name: "📺️巴哈姆特"
+  type: select
+  use:
+  - sub1
+  filter: "(?i)台|tw|taiwan"
+  proxies:
+  - "🛫海外流量"
+
+- name: "🥵Niconico"
+  type: select
+  use:
+  - sub1
+  filter: "(?i)日本|jp|japan"
+  proxies:
+  - "🛫海外流量"
+
+- name: "🥵EHentai"
+  type: select
+  proxies:
+    - "🛫海外流量"
+    - "🇭🇰香港 HongKong"
+    - "🇹🇼台湾 TaiWan"
+    - "🇺🇸美国 USA"
+    - "🇸🇬新加坡 Singapore"
+    - "🇰🇷韩国  Korea"
+    - "🇬🇧英国 UK"
+    - "🗺️其它地区"
+
+- name: "⬇PT下载"
+  type: select
+  proxies:
+    - "🛫海外流量"
+    - "🇭🇰香港 HongKong"
+    - "🇹🇼台湾 TaiWan"
+    - "🇯🇵日本 Japan"
+    - "🇺🇸美国 USA"
+    - "🇸🇬新加坡 Singapore"
+    - "🇰🇷韩国  Korea"
+    - "🇬🇧英国 UK"
+    - "🗺️其它地区"
+
+- name: "🎯广告拦截"
+  type: select
+  proxies:
+    - REJECT
+    - DIRECT
+
+- name: "🐟️漏网之鱼"
+  type: select
+  proxies:
+    - "🛫海外流量"
+    - DIRECT
+
+geodata-mode: true
 geox-url:
   geoip: "https://fastly.jsdelivr.net/gh/MetaCubeX/meta-rules-dat@release/geoip.dat"
   geosite: "https://fastly.jsdelivr.net/gh/MetaCubeX/meta-rules-dat@release/geosite.dat"
-  mmdb: "https://fastly.jsdelivr.net/gh/MetaCubeX/meta-rules-dat@release/geoip.metadb"
+  mmdb: "https://fastly.jsdelivr.net/gh/MetaCubeX/meta-rules-dat@release/country.mmdb"
 
-log-level: debug # 日志等级 silent/error/warning/info/debug
-
-ipv6: true # 开启 IPv6 总开关，关闭阻断所有 IPv6 链接和屏蔽 DNS 请求 AAAA 记录
-
-tls:
-  certificate: string # 证书 PEM 格式，或者 证书的路径
-  private-key: string # 证书对应的私钥 PEM 格式，或者私钥路径
-  custom-certifactes:
-    - |
-      -----BEGIN CERTIFICATE-----
-      format/pem...
-      -----END CERTIFICATE-----
-
-external-controller: 0.0.0.0:9093 # RESTful API 监听地址
-external-controller-tls: 0.0.0.0:9443 # RESTful API HTTPS 监听地址，需要配置 tls 部分配置文件
-# secret: "123456" # `Authorization:Bearer ${secret}`
-
-# tcp-concurrent: true # TCP 并发连接所有 IP, 将使用最快握手的 TCP
-
-# 配置 WEB UI 目录，使用 http://{{external-controller}}/ui 访问
-external-ui: /path/to/ui/folder/
-external-ui-name: xd
-external-ui-url: "https://github.com/MetaCubeX/metacubexd/archive/refs/heads/gh-pages.zip"
-
-# interface-name: en0 # 设置出口网卡
-
-# 全局 TLS 指纹，优先低于 proxy 内的 client-fingerprint
-# 可选： "chrome","firefox","safari","ios","random","none" options.
-# Utls is currently support TLS transport in TCP/grpc/WS/HTTP for VLESS/Vmess and trojan.
-global-client-fingerprint: chrome
-
-#  TCP keep alive interval
-keep-alive-interval: 15
-
-# routing-mark:6666 # 配置 fwmark 仅用于 Linux
-experimental:
-  # Disable quic-go GSO support. This may result in reduced performance on Linux.
-  # This is not recommended for most users.
-  # Only users encountering issues with quic-go's internal implementation should enable this,
-  # and they should disable it as soon as the issue is resolved.
-  # This field will be removed when quic-go fixes all their issues in GSO.
-  # This equivalent to the environment variable QUIC_GO_DISABLE_GSO=1.
-  #quic-go-disable-gso: true
-
-# 类似于 /etc/hosts, 仅支持配置单个 IP
-hosts:
-# '*.mihomo.dev': 127.0.0.1
-# '.dev': 127.0.0.1
-# 'alpha.mihomo.dev': '::1'
-# test.com: [1.1.1.1, 2.2.2.2]
-# home.lan: lan # lan 为特别字段，将加入本地所有网卡的地址
-# baidu.com: google.com # 只允许配置一个别名
-
-profile: # 存储 select 选择记录
-  store-selected: false
-
-  # 持久化 fake-ip
-  store-fake-ip: true
-
-# Tun 配置
-tun:
-  enable: false
-  stack: system # gvisor / lwip
-  dns-hijack:
-    - 0.0.0.0:53 # 需要劫持的 DNS
-  # auto-detect-interface: true # 自动识别出口网卡
-  # auto-route: true # 配置路由表
-  # mtu: 9000 # 最大传输单元
-  # strict-route: true # 将所有连接路由到tun来防止泄漏，但你的设备将无法其他设备被访问
-  inet4-route-address: # 启用 auto_route 时使用自定义路由而不是默认路由
-    - 0.0.0.0/1
-    - 128.0.0.0/1
-  inet6-route-address: # 启用 auto_route 时使用自定义路由而不是默认路由
-    - "::/1"
-    - "8000::/1"
-  # endpoint-independent-nat: false # 启用独立于端点的 NAT
-  # include-uid: # UID 规则仅在 Linux 下被支持，并且需要 auto_route
-  # - 0
-  # include-uid-range: # 限制被路由的的用户范围
-  # - 1000-99999
-  # exclude-uid: # 排除路由的的用户
-  #- 1000
-  # exclude-uid-range: # 排除路由的的用户范围
-  # - 1000-99999
-
-  # Android 用户和应用规则仅在 Android 下被支持
-  # 并且需要 auto-route
-
-  # include-android-user: # 限制被路由的 Android 用户
-  # - 0
-  # - 10
-  # include-package: # 限制被路由的 Android 应用包名
-  # - com.android.chrome
-  # exclude-package: # 排除被路由的 Android 应用包名
-  # - com.android.captiveportallogin
-
-#ebpf配置
-ebpf:
-  auto-redir: # redirect 模式，仅支持 TCP
-    - eth0
-  redirect-to-tun: # UDP+TCP 使用该功能请勿启用 auto-route
-    - eth0
-
-# 嗅探域名 可选配置
-sniffer:
-  enable: false
-  ## 对 redir-host 类型识别的流量进行强制嗅探
-  ## 如：Tun、Redir 和 TProxy 并 DNS 为 redir-host 皆属于
-  # force-dns-mapping: false
-  ## 对所有未获取到域名的流量进行强制嗅探
-  # parse-pure-ip: false
-  # 是否使用嗅探结果作为实际访问，默认 true
-  # 全局配置，优先级低于 sniffer.sniff 实际配置
-  override-destination: false
-  sniff: # TLS 和 QUIC 默认如果不配置 ports 默认嗅探 443
-    QUIC:
-    #  ports: [ 443 ]
-    TLS:
-    #  ports: [443, 8443]
-
-    # 默认嗅探 80
-    HTTP: # 需要嗅探的端口
-      ports: [80, 8080-8880]
-      # 可覆盖 sniffer.override-destination
-      override-destination: true
-  force-domain:
-    - +.v2ex.com
-  ## 对嗅探结果进行跳过
-  # skip-domain:
-  #   - Mijia Cloud
-  # 需要嗅探协议
-  # 已废弃，若 sniffer.sniff 配置则此项无效
-  sniffing:
-    - tls
-    - http
-  # 强制对此域名进行嗅探
-
-  # 仅对白名单中的端口进行嗅探，默认为 443，80
-  # 已废弃，若 sniffer.sniff 配置则此项无效
-  port-whitelist:
-    - "80"
-    - "443"
-    # - 8000-9999
-
-tunnels: # one line config
-  - tcp/udp,127.0.0.1:6553,114.114.114.114:53,proxy
-  - tcp,127.0.0.1:6666,rds.mysql.com:3306,vpn
-  # full yaml config
-  - network: [tcp, udp]
-    address: 127.0.0.1:7777
-    target: target.com
-    proxy: proxy
-
-# DNS配置
-dns:
-  enable: false # 关闭将使用系统 DNS
-  prefer-h3: true # 开启 DoH 支持 HTTP/3，将并发尝试
-  listen: 0.0.0.0:53 # 开启 DNS 服务器监听
-  # ipv6: false # false 将返回 AAAA 的空结果
-  # ipv6-timeout: 300 # 单位：ms，内部双栈并发时，向上游查询 AAAA 时，等待 AAAA 的时间，默认 100ms
-  # 用于解析 nameserver，fallback 以及其他DNS服务器配置的，DNS 服务域名
-  # 只能使用纯 IP 地址，可使用加密 DNS
-  default-nameserver:
-    - 114.114.114.114
-    - 8.8.8.8
-    - tls://1.12.12.12:853
-    - tls://223.5.5.5:853
-    - system # append DNS server from system configuration. If not found, it would print an error log and skip.
-  enhanced-mode: fake-ip # or redir-host
-
-  fake-ip-range: 198.18.0.1/16 # fake-ip 池设置
-
-  # use-hosts: true # 查询 hosts
-
-  # 配置不使用fake-ip的域名
-  # fake-ip-filter:
-  #   - '*.lan'
-  #   - localhost.ptlogin2.qq.com
-
-  # DNS主要域名配置
-  # 支持 UDP，TCP，DoT，DoH，DoQ
-  # 这部分为主要 DNS 配置，影响所有直连，确保使用对大陆解析精准的 DNS
-  nameserver:
-    - 114.114.114.114 # default value
-    - 8.8.8.8 # default value
-    - tls://223.5.5.5:853 # DNS over TLS
-    - https://doh.pub/dns-query # DNS over HTTPS
-    - https://dns.alidns.com/dns-query#h3=true # 强制 HTTP/3，与 perfer-h3 无关，强制开启 DoH 的 HTTP/3 支持，若不支持将无法使用
-    - https://mozilla.cloudflare-dns.com/dns-query#DNS&h3=true # 指定策略组和使用 HTTP/3
-    - dhcp://en0 # dns from dhcp
-    - quic://dns.adguard.com:784 # DNS over QUIC
-    # - '8.8.8.8#en0' # 兼容指定DNS出口网卡
-
-  # 当配置 fallback 时，会查询 nameserver 中返回的 IP 是否为 CN，非必要配置
-  # 当不是 CN，则使用 fallback 中的 DNS 查询结果
-  # 确保配置 fallback 时能够正常查询
-  # fallback:
-  #   - tcp://1.1.1.1
-  #   - 'tcp://1.1.1.1#ProxyGroupName' # 指定 DNS 过代理查询，ProxyGroupName 为策略组名或节点名，过代理配置优先于配置出口网卡，当找不到策略组或节点名则设置为出口网卡
-
-  # 专用于节点域名解析的 DNS 服务器，非必要配置项
-  # 配置服务器若查询失败将使用 nameserver，非并发查询
-  # proxy-server-nameserver:
-  # - https://dns.google/dns-query
-  # - tls://one.one.one.one
-
-  # 配置 fallback 使用条件
-  # fallback-filter:
-  #   geoip: true # 配置是否使用 geoip
-  #   geoip-code: CN # 当 nameserver 域名的 IP 查询 geoip 库为 CN 时，不使用 fallback 中的 DNS 查询结果
-  #   配置强制 fallback，优先于 IP 判断，具体分类自行查看 geosite 库
-  #   geosite:
-  #     - gfw
-  #   如果不匹配 ipcidr 则使用 nameservers 中的结果
-  #   ipcidr:
-  #     - 240.0.0.0/4
-  #   domain:
-  #     - '+.google.com'
-  #     - '+.facebook.com'
-  #     - '+.youtube.com'
-
-  # 配置查询域名使用的 DNS 服务器
-  nameserver-policy:
-    #   'www.baidu.com': '114.114.114.114'
-    #   '+.internal.crop.com': '10.0.0.1'
-    "geosite:cn,private,apple":
-      - https://doh.pub/dns-query
-      - https://dns.alidns.com/dns-query
-    "geosite:category-ads-all": rcode://success
-    "www.baidu.com,+.google.cn": [223.5.5.5, https://dns.alidns.com/dns-query]
-    ## global，dns 为 rule-providers 中的名为 global 和 dns 规则订阅，
-    ## 且 behavior 必须为 domain/classical，当为 classical 时仅会生效域名类规则
-    # "rule-set:global,dns": 8.8.8.8
-
-proxies: # socks5
-  - name: "socks"
-    type: socks5
-    server: server
-    port: 443
-    # username: username
-    # password: password
-    # tls: true
-    # fingerprint: xxxx
-    # skip-cert-verify: true
-    # udp: true
-    # ip-version: ipv6
-
-  # http
-  - name: "http"
-    type: http
-    server: server
-    port: 443
-    # username: username
-    # password: password
-    # tls: true # https
-    # skip-cert-verify: true
-    # sni: custom.com
-    # fingerprint: xxxx # 同 experimental.fingerprints 使用 sha256 指纹，配置协议独立的指纹，将忽略 experimental.fingerprints
-    # ip-version: dual
-
-  # Snell
-  # Beware that there's currently no UDP support yet
-  - name: "snell"
-    type: snell
-    server: server
-    port: 44046
-    psk: yourpsk
-    # version: 2
-    # obfs-opts:
-    # mode: http # or tls
-    # host: bing.com
-
-  # Shadowsocks
-  # cipher支持:
-  #   aes-128-gcm aes-192-gcm aes-256-gcm
-  #   aes-128-cfb aes-192-cfb aes-256-cfb
-  #   aes-128-ctr aes-192-ctr aes-256-ctr
-  #   rc4-md5 chacha20-ietf xchacha20
-  #   chacha20-ietf-poly1305 xchacha20-ietf-poly1305
-  #   2022-blake3-aes-128-gcm 2022-blake3-aes-256-gcm 2022-blake3-chacha20-poly1305
-  - name: "ss1"
-    type: ss
-    server: server
-    port: 443
-    cipher: chacha20-ietf-poly1305
-    password: "password"
-    # udp: true
-    # udp-over-tcp: false
-    # ip-version: ipv4 # 设置节点使用 IP 版本，可选：dual，ipv4，ipv6，ipv4-prefer，ipv6-prefer。默认使用 dual
-    # ipv4：仅使用 IPv4  ipv6：仅使用 IPv6
-    # ipv4-prefer：优先使用 IPv4 对于 TCP 会进行双栈解析，并发链接但是优先使用 IPv4 链接,
-    # UDP 则为双栈解析，获取结果中的第一个 IPv4
-    # ipv6-prefer 同 ipv4-prefer
-    # 现有协议都支持此参数，TCP 效果仅在开启 tcp-concurrent 生效
-    smux:
-      enabled: false
-      protocol: smux # smux/yamux/h2mux
-      # max-connections: 4 # Maximum connections. Conflict with max-streams.
-      # min-streams: 4 # Minimum multiplexed streams in a connection before opening a new connection. Conflict with max-streams.
-      # max-streams: 0 # Maximum multiplexed streams in a connection before opening a new connection. Conflict with max-connections and min-streams.
-      # padding: false # Enable padding. Requires sing-box server version 1.3-beta9 or later.
-      # statistic: false # 控制是否将底层连接显示在面板中，方便打断底层连接
-      # only-tcp: false # 如果设置为true, smux的设置将不会对udp生效，udp连接会直接走底层协议
-
-  - name: "ss2"
-    type: ss
-    server: server
-    port: 443
-    cipher: chacha20-ietf-poly1305
-    password: "password"
-    plugin: obfs
-    plugin-opts:
-      mode: tls # or http
-      # host: bing.com
-
-  - name: "ss3"
-    type: ss
-    server: server
-    port: 443
-    cipher: chacha20-ietf-poly1305
-    password: "password"
-    plugin: v2ray-plugin
-    plugin-opts:
-      mode: websocket # no QUIC now
-      # tls: true # wss
-      # 可使用 openssl x509 -noout -fingerprint -sha256 -inform pem -in yourcert.pem 获取
-      # 配置指纹将实现 SSL Pining 效果
-      # fingerprint: xxxx
-      # skip-cert-verify: true
-      # host: bing.com
-      # path: "/"
-      # mux: true
-      # headers:
-      #   custom: value
-      # v2ray-http-upgrade: false
-
-  - name: "ss4-shadow-tls"
-    type: ss
-    server: server
-    port: 443
-    cipher: chacha20-ietf-poly1305
-    password: "password"
-    plugin: shadow-tls
-    client-fingerprint: chrome
-    plugin-opts:
-      host: "cloud.tencent.com"
-      password: "shadow_tls_password"
-      version: 2 # support 1/2/3
-
-  - name: "ss-restls-tls13"
-    type: ss
-    server: [YOUR_SERVER_IP]
-    port: 443
-    cipher: chacha20-ietf-poly1305
-    password: [YOUR_SS_PASSWORD]
-    client-fingerprint:
-      chrome # One of: chrome, ios, firefox or safari
-      # 可以是chrome, ios, firefox, safari中的一个
-    plugin: restls
-    plugin-opts:
-      host:
-        "www.microsoft.com" # Must be a TLS 1.3 server
-        # 应当是一个TLS 1.3 服务器
-      password: [YOUR_RESTLS_PASSWORD]
-      version-hint: "tls13"
-      # Control your post-handshake traffic through restls-script
-      # Hide proxy behaviors like "tls in tls".
-      # see https://github.com/3andne/restls/blob/main/Restls-Script:%20Hide%20Your%20Proxy%20Traffic%20Behavior.md
-      # 用restls剧本来控制握手后的行为，隐藏"tls in tls"等特征
-      # 详情：https://github.com/3andne/restls/blob/main/Restls-Script:%20%E9%9A%90%E8%97%8F%E4%BD%A0%E7%9A%84%E4%BB%A3%E7%90%86%E8%A1%8C%E4%B8%BA.md
-      restls-script: "300?100<1,400~100,350~100,600~100,300~200,300~100"
-
-  - name: "ss-restls-tls12"
-    type: ss
-    server: [YOUR_SERVER_IP]
-    port: 443
-    cipher: chacha20-ietf-poly1305
-    password: [YOUR_SS_PASSWORD]
-    client-fingerprint:
-      chrome # One of: chrome, ios, firefox or safari
-      # 可以是chrome, ios, firefox, safari中的一个
-    plugin: restls
-    plugin-opts:
-      host:
-        "vscode.dev" # Must be a TLS 1.2 server
-        # 应当是一个TLS 1.2 服务器
-      password: [YOUR_RESTLS_PASSWORD]
-      version-hint: "tls12"
-      restls-script: "1000?100<1,500~100,350~100,600~100,400~200"
-
-  # vmess
-  # cipher支持 auto/aes-128-gcm/chacha20-poly1305/none
-  - name: "vmess"
-    type: vmess
-    server: server
-    port: 443
-    uuid: uuid
-    alterId: 32
-    cipher: auto
-    # udp: true
-    # tls: true
-    # fingerprint: xxxx
-    # client-fingerprint: chrome    # Available: "chrome","firefox","safari","ios","random", currently only support TLS transport in TCP/GRPC/WS/HTTP for VLESS/Vmess and trojan.
-    # skip-cert-verify: true
-    # servername: example.com # priority over wss host
-    # network: ws
-    # ws-opts:
-      # path: /path
-      # headers:
-      #   Host: v2ray.com
-      # max-early-data: 2048
-      # early-data-header-name: Sec-WebSocket-Protocol
-      # v2ray-http-upgrade: false
-
-  - name: "vmess-h2"
-    type: vmess
-    server: server
-    port: 443
-    uuid: uuid
-    alterId: 32
-    cipher: auto
-    network: h2
-    tls: true
-    # fingerprint: xxxx
-    h2-opts:
-      host:
-        - http.example.com
-        - http-alt.example.com
-      path: /
-
-  - name: "vmess-http"
-    type: vmess
-    server: server
-    port: 443
-    uuid: uuid
-    alterId: 32
-    cipher: auto
-    # udp: true
-    # network: http
-    # http-opts:
-    #   method: "GET"
-    #   path:
-    #     - '/'
-    #     - '/video'
-    #   headers:
-    #     Connection:
-    #       - keep-alive
-    # ip-version: ipv4 # 设置使用 IP 类型偏好，可选：ipv4，ipv6，dual，默认值：dual
-
-  - name: vmess-grpc
-    server: server
-    port: 443
-    type: vmess
-    uuid: uuid
-    alterId: 32
-    cipher: auto
-    network: grpc
-    tls: true
-    # fingerprint: xxxx
-    servername: example.com
-    # skip-cert-verify: true
-    grpc-opts:
-      grpc-service-name: "example"
-    # ip-version: ipv4
-
-  # vless
-  - name: "vless-tcp"
-    type: vless
-    server: server
-    port: 443
-    uuid: uuid
-    network: tcp
-    servername: example.com # AKA SNI
-    # flow: xtls-rprx-direct # xtls-rprx-origin  # enable XTLS
-    # skip-cert-verify: true
-    # fingerprint: xxxx
-    # client-fingerprint: random # Available: "chrome","firefox","safari","random","none"
-
-  - name: "vless-vision"
-    type: vless
-    server: server
-    port: 443
-    uuid: uuid
-    network: tcp
-    tls: true
-    udp: true
-    flow: xtls-rprx-vision
-    client-fingerprint: chrome
-    # fingerprint: xxxx
-    # skip-cert-verify: true
-
-  - name: "vless-reality-vision"
-    type: vless
-    server: server
-    port: 443
-    uuid: uuid
-    network: tcp
-    tls: true
-    udp: true
-    flow: xtls-rprx-vision
-    servername: www.microsoft.com # REALITY servername
-    reality-opts:
-      public-key: xxx
-      short-id: xxx # optional
-    client-fingerprint: chrome # cannot be empty
-
-  - name: "vless-reality-grpc"
-    type: vless
-    server: server
-    port: 443
-    uuid: uuid
-    network: grpc
-    tls: true
-    udp: true
-    flow:
-    # skip-cert-verify: true
-    client-fingerprint: chrome
-    servername: testingcf.jsdelivr.net
-    grpc-opts:
-      grpc-service-name: "grpc"
-    reality-opts:
-      public-key: CrrQSjAG_YkHLwvM2M-7XkKJilgL5upBKCp0od0tLhE
-      short-id: 10f897e26c4b9478
-
-  - name: "vless-ws"
-    type: vless
-    server: server
-    port: 443
-    uuid: uuid
-    udp: true
-    tls: true
-    network: ws
-    # client-fingerprint: random # Available: "chrome","firefox","safari","random","none"
-    servername: example.com # priority over wss host
-    # skip-cert-verify: true
-    # fingerprint: xxxx
-    ws-opts:
-      path: "/"
-      headers:
-        Host: example.com
-      # v2ray-http-upgrade: false
-
-  # Trojan
-  - name: "trojan"
-    type: trojan
-    server: server
-    port: 443
-    password: yourpsk
-    # client-fingerprint: random # Available: "chrome","firefox","safari","random","none"
-    # fingerprint: xxxx
-    # udp: true
-    # sni: example.com # aka server name
-    # alpn:
-    #   - h2
-    #   - http/1.1
-    # skip-cert-verify: true
-
-  - name: trojan-grpc
-    server: server
-    port: 443
-    type: trojan
-    password: "example"
-    network: grpc
-    sni: example.com
-    # skip-cert-verify: true
-    # fingerprint: xxxx
-    udp: true
-    grpc-opts:
-      grpc-service-name: "example"
-
-  - name: trojan-ws
-    server: server
-    port: 443
-    type: trojan
-    password: "example"
-    network: ws
-    sni: example.com
-    # skip-cert-verify: true
-    # fingerprint: xxxx
-    udp: true
-    # ws-opts:
-    #   path: /path
-    #   headers:
-    #     Host: example.com
-    #   v2ray-http-upgrade: false
-
-  - name: "trojan-xtls"
-    type: trojan
-    server: server
-    port: 443
-    password: yourpsk
-    flow: "xtls-rprx-direct" # xtls-rprx-origin xtls-rprx-direct
-    flow-show: true
-    # udp: true
-    # sni: example.com # aka server name
-    # skip-cert-verify: true
-    # fingerprint: xxxx
-
-  #hysteria
-  - name: "hysteria"
-    type: hysteria
-    server: server.com
-    port: 443
-    # ports: 1000,2000-3000,5000 # port 不可省略,
-    auth_str: yourpassword # 将会在未来某个时候删除
-    # auth-str: yourpassword
-    # obfs: obfs_str
-    # alpn:
-    #   - h3
-    protocol: udp # 支持 udp/wechat-video/faketcp
-    up: "30 Mbps" # 若不写单位，默认为 Mbps
-    down: "200 Mbps" # 若不写单位，默认为 Mbps
-    # sni: server.com
-    # skip-cert-verify: false
-    # recv_window_conn: 12582912 # 将会在未来某个时候删除
-    # recv-window-conn: 12582912
-    # recv_window: 52428800 # 将会在未来某个时候删除
-    # recv-window: 52428800
-    # ca: "./my.ca"
-    # ca_str: "xyz" # 将会在未来某个时候删除
-    # ca-str: "xyz"
-    # disable_mtu_discovery: false
-    # fingerprint: xxxx
-    # fast-open: true # 支持 TCP 快速打开，默认为 false
-
-  #hysteria2
-  - name: "hysteria2"
-    type: hysteria2
-    server: server.com
-    port: 443
-    #  up和down均不写或为0则使用BBR流控
-    # up: "30 Mbps" # 若不写单位，默认为 Mbps
-    # down: "200 Mbps" # 若不写单位，默认为 Mbps
-    password: yourpassword
-    # obfs: salamander # 默认为空，如果填写则开启obfs，目前仅支持salamander
-    # obfs-password: yourpassword
-    # sni: server.com
-    # skip-cert-verify: false
-    # fingerprint: xxxx
-    # alpn:
-    #   - h3
-    # ca: "./my.ca"
-    # ca-str: "xyz"
-
-  # wireguard
-  - name: "wg"
-    type: wireguard
-    server: 162.159.192.1
-    port: 2480
-    ip: 172.16.0.2
-    ipv6: fd01:5ca1:ab1e:80fa:ab85:6eea:213f:f4a5
-    public-key: Cr8hWlKvtDt7nrvf+f0brNQQzabAqrjfBvas9pmowjo=
-    #    pre-shared-key: 31aIhAPwktDGpH4JDhA8GNvjFXEf/a6+UaQRyOAiyfM=
-    private-key: eCtXsJZ27+4PbhDkHnB923tkUn2Gj59wZw5wFA75MnU=
-    udp: true
-    reserved: "U4An"
-    # 数组格式也是合法的
-    # reserved: [209,98,59]
-    # 一个出站代理的标识。当值不为空时，将使用指定的 proxy 发出连接
-    # dialer-proxy: "ss1"
-    # remote-dns-resolve: true # 强制dns远程解析，默认值为false
-    # dns: [ 1.1.1.1, 8.8.8.8 ] # 仅在remote-dns-resolve为true时生效
-    # 如果peers不为空，该段落中的allowed_ips不可为空；前面段落的server,port,ip,ipv6,public-key,pre-shared-key均会被忽略，但private-key会被保留且只能在顶层指定
-    # peers:
-    #   - server: 162.159.192.1
-    #     port: 2480
-    #     ip: 172.16.0.2
-    #     ipv6: fd01:5ca1:ab1e:80fa:ab85:6eea:213f:f4a5
-    #     public-key: Cr8hWlKvtDt7nrvf+f0brNQQzabAqrjfBvas9pmowjo=
-    #     # pre-shared-key: 31aIhAPwktDGpH4JDhA8GNvjFXEf/a6+UaQRyOAiyfM=
-    #     allowed_ips: ['0.0.0.0/0']
-    #     reserved: [209,98,59]
-
-  # tuic
-  - name: tuic
-    server: www.example.com
-    port: 10443
-    type: tuic
-    # tuicV4必须填写token （不可同时填写uuid和password）
-    token: TOKEN
-    # tuicV5必须填写uuid和password（不可同时填写token）
-    uuid: 00000000-0000-0000-0000-000000000001
-    password: PASSWORD_1
-    # ip: 127.0.0.1 # for overwriting the DNS lookup result of the server address set in option 'server'
-    # heartbeat-interval: 10000
-    # alpn: [h3]
-    disable-sni: true
-    reduce-rtt: true
-    request-timeout: 8000
-    udp-relay-mode: native # Available: "native", "quic". Default: "native"
-    # congestion-controller: bbr # Available: "cubic", "new_reno", "bbr". Default: "cubic"
-    # cwnd: 10 # default: 32
-    # max-udp-relay-packet-size: 1500
-    # fast-open: true
-    # skip-cert-verify: true
-    # max-open-streams: 20 # default 100, too many open streams may hurt performance
-    # sni: example.com
-    #
-    # meta和sing-box私有扩展，将ss-uot用于udp中继，开启此选项后udp-relay-mode将失效
-    # 警告，与原版tuic不兼容！！！
-    # udp-over-stream: false
-    # udp-over-stream-version: 1
-
-  # ShadowsocksR
-  # The supported ciphers (encryption methods): all stream ciphers in ss
-  # The supported obfses:
-  #   plain http_simple http_post
-  #   random_head tls1.2_ticket_auth tls1.2_ticket_fastauth
-  # The supported supported protocols:
-  #   origin auth_sha1_v4 auth_aes128_md5
-  #   auth_aes128_sha1 auth_chain_a auth_chain_b
-  - name: "ssr"
-    type: ssr
-    server: server
-    port: 443
-    cipher: chacha20-ietf
-    password: "password"
-    obfs: tls1.2_ticket_auth
-    protocol: auth_sha1_v4
-    # obfs-param: domain.tld
-    # protocol-param: "#"
-    # udp: true
-
-proxy-groups:
-  # 代理链，目前relay可以支持udp的只有vmess/vless/trojan/ss/ssr/tuic
-  # wireguard目前不支持在relay中使用，请使用proxy中的dialer-proxy配置项
-  # Traffic: mihomo <-> http <-> vmess <-> ss1 <-> ss2 <-> Internet
-  - name: "relay"
-    type: relay
-    proxies:
-      - http
-      - vmess
-      - ss1
-      - ss2
-
-  # url-test 将按照 url 测试结果使用延迟最低节点
-  - name: "auto"
-    type: url-test
-    proxies:
-      - ss1
-      - ss2
-      - vmess1
-    # tolerance: 150
-    # lazy: true
-    url: "https://cp.cloudflare.com/generate_204"
-    interval: 300
-
-  # fallback 将按照 url 测试结果按照节点顺序选择
-  - name: "fallback-auto"
-    type: fallback
-    proxies:
-      - ss1
-      - ss2
-      - vmess1
-    url: "https://cp.cloudflare.com/generate_204"
-    interval: 300
-
-  # load-balance 将按照算法随机选择节点
-  - name: "load-balance"
-    type: load-balance
-    proxies:
-      - ss1
-      - ss2
-      - vmess1
-    url: "https://cp.cloudflare.com/generate_204"
-    interval: 300
-  # strategy: consistent-hashing # 可选 round-robin 和 sticky-sessions
-
-  # select 用户自行选择节点
-  - name: Proxy
-    type: select
-    # disable-udp: true
-    proxies:
-      - ss1
-      - ss2
-      - vmess1
-      - auto
-
-  # 配置指定 interface-name 和 fwmark 的 DIRECT
-  - name: en1
-    type: select
-    interface-name: en1
-    routing-mark: 6667
-    proxies:
-      - DIRECT
-
-  - name: UseProvider
-    type: select
-    filter: "HK|TW" # 正则表达式，过滤 provider1 中节点名包含 HK 或 TW
-    use:
-      - provider1
-    proxies:
-      - Proxy
-      - DIRECT
-
-# Mihomo 格式的节点或支持 *ray 的分享格式
-proxy-providers:
-  provider1:
-    type: http # http 的 path 可空置,默认储存路径为 homedir的proxies文件夹,文件名为url的md5
-    url: "url"
-    interval: 3600
-    path: ./provider1.yaml # 默认只允许存储在 mihomo 的 Home Dir，如果想存储到任意位置，添加环境变量 SKIP_SAFE_PATH_CHECK=1
-    health-check:
-      enable: true
-      interval: 600
-      # lazy: true
-      url: https://cp.cloudflare.com/generate_204
-  test:
-    type: file
-    path: /test.yaml
-    health-check:
-      enable: true
-      interval: 36000
-      url: https://cp.cloudflare.com/generate_204
 rule-providers:
-  rule1:
-    behavior: classical # domain ipcidr
-    interval: 259200
-    path: /path/to/save/file.yaml # 默认只允许存储在 mihomo 的 Home Dir，如果想存储到任意位置，添加环境变量 SKIP_SAFE_PATH_CHECK=1
-    type: http # http 的 path 可空置,默认储存路径为 homedir的rules文件夹,文件名为url的md5
-    url: "url"
-  rule2:
-    behavior: classical
-    interval: 259200
-    path: /path/to/save/file.yaml
-    type: file
-rules:
-  - RULE-SET,rule1,REJECT
-  - DOMAIN-SUFFIX,baidu.com,DIRECT
-  - DOMAIN-KEYWORD,google,ss1
-  - IP-CIDR,1.1.1.1/32,ss1
-  - IP-CIDR6,2409::/64,DIRECT
-  # 当满足条件是 TCP 或 UDP 流量时，使用名为 sub-rule-name1 的规则集
-  - SUB-RULE,(OR,((NETWORK,TCP),(NETWORK,UDP))),sub-rule-name1
-  - SUB-RULE,(AND,((NETWORK,UDP))),sub-rule-name2
-# 定义多个子规则集，规则将以分叉匹配，使用 SUB-RULE 使用
-#                                               google.com(not match)--> baidu.com(match)
-#                                                /                                ｜
-#                                               /                                 ｜
-#  https://baidu.com  --> rule1 --> rule2 --> sub-rule-name1(match tcp)          使用 DIRECT
-#
-#
-#                                              google.com(not match)--> baidu.com(not match)
-#                                                /                            ｜
-#                                               /                             ｜
-#  dns 1.1.1.1  --> rule1 --> rule2 --> sub-rule-name1(match udp)         sub-rule-name2(match udp)
-#                                                                             ｜
-#                                                                             ｜
-#                                                                 使用 REJECT <-- 1.1.1.1/32(match)
-#
-
-sub-rules:
-  sub-rule-name1:
-    - DOMAIN,google.com,ss1
-    - DOMAIN,baidu.com,DIRECT
-  sub-rule-name2:
-    - IP-CIDR,1.1.1.1/32,REJECT
-    - IP-CIDR,8.8.8.8/32,ss1
-    - DOMAIN,dns.alidns.com,REJECT
-
-# 流量入站
-listeners:
-  - name: socks5-in-1
-    type: socks
-    port: 10808
-    #listen: 0.0.0.0 # 默认监听 0.0.0.0
-    # rule: sub-rule-name1 # 默认使用 rules，如果未找到 sub-rule 则直接使用 rules
-    # proxy: proxy # 如果不为空则直接将该入站流量交由指定proxy处理
-    # udp: false # 默认 true
-
-  - name: http-in-1
+  Direct:
     type: http
-    port: 10809
-    listen: 0.0.0.0
-    # rule: sub-rule-name1 # 默认使用 rules，如果未找到 sub-rule 则直接使用 rules
-    # proxy: proxy # 如果不为空则直接将该入站流量交由指定proxy处理(当proxy不为空时，这里的proxy名称必须合法，否则会出错)
+    behavior: classical
+    url: "https://cdn.jsdelivr.net/gh/Loyalsoldier/clash-rules@release/applications.txt"
+    path: ./ruleset/Direct.yaml
+    interval: 86400
 
-  - name: mixed-in-1
-    type: mixed #  HTTP(S) 和 SOCKS 代理混合
-    port: 10810
-    listen: 0.0.0.0
-    # rule: sub-rule-name1 # 默认使用 rules，如果未找到 sub-rule 则直接使用 rules
-    # proxy: proxy # 如果不为空则直接将该入站流量交由指定proxy处理(当proxy不为空时，这里的proxy名称必须合法，否则会出错)
-    # udp: false # 默认 true
+  Marketing: #思杰马克丁软件
+    type: http
+    behavior: classical
+    url: "https://cdn.jsdelivr.net/gh/blackmatrix7/ios_rule_script@master/rule/Clash/Marketing/Marketing.yaml"
+    path: ./ruleset/Marketing.yaml
+    interval: 86400
+    
+  private: #私有网络
+    type: http
+    behavior: domain
+    url: "https://cdn.jsdelivr.net/gh/Loyalsoldier/clash-rules@release/private.txt"
+    path: ./ruleset/private.yaml
+    interval: 86400
 
-  - name: reidr-in-1
-    type: redir
-    port: 10811
-    listen: 0.0.0.0
-    # rule: sub-rule-name1 # 默认使用 rules，如果未找到 sub-rule 则直接使用 rules
-    # proxy: proxy # 如果不为空则直接将该入站流量交由指定proxy处理(当proxy不为空时，这里的proxy名称必须合法，否则会出错)
+  lancidr: #局域网 IP 及保留 IP 地址列表
+    type: http
+    behavior: ipcidr
+    url: "https://cdn.jsdelivr.net/gh/Loyalsoldier/clash-rules@release/lancidr.txt"
+    path: ./ruleset/lancidr.yaml
+    interval: 86400
 
-  - name: tproxy-in-1
-    type: tproxy
-    port: 10812
-    listen: 0.0.0.0
-    # rule: sub-rule-name1 # 默认使用 rules，如果未找到 sub-rule 则直接使用 rules
-    # proxy: proxy # 如果不为空则直接将该入站流量交由指定proxy处理(当proxy不为空时，这里的proxy名称必须合法，否则会出错)
-    # udp: false # 默认 true
+  ChinaMax:
+    type: http
+    behavior: classical
+    url: "https://cdn.jsdelivr.net/gh/blackmatrix7/ios_rule_script@master/rule/Clash/ChinaMax/ChinaMax_Classical.yaml"
+    path: ./ruleset/ChinaMax.yaml
+    interval: 86400
 
-  - name: shadowsocks-in-1
-    type: shadowsocks
-    port: 10813
-    listen: 0.0.0.0
-    # rule: sub-rule-name1 # 默认使用 rules，如果未找到 sub-rule 则直接使用 rules
-    # proxy: proxy # 如果不为空则直接将该入站流量交由指定proxy处理(当proxy不为空时，这里的proxy名称必须合法，否则会出错)
-    password: vlmpIPSyHH6f4S8WVPdRIHIlzmB+GIRfoH3aNJ/t9Gg=
-    cipher: 2022-blake3-aes-256-gcm
+#海外服务
+  Google: 
+    type: http
+    behavior: classical
+    url: "https://cdn.jsdelivr.net/gh/blackmatrix7/ios_rule_script@master/rule/Clash/Google/Google.yaml"
+    path: ./ruleset/Google.yaml
+    interval: 86400
 
-  - name: vmess-in-1
-    type: vmess
-    port: 10814
-    listen: 0.0.0.0
-    # rule: sub-rule-name1 # 默认使用 rules，如果未找到 sub-rule 则直接使用 rules
-    # proxy: proxy # 如果不为空则直接将该入站流量交由指定proxy处理(当proxy不为空时，这里的proxy名称必须合法，否则会出错)
-    users:
-      - username: 1
-        uuid: 9d0cb9d0-964f-4ef6-897d-6c6b3ccf9e68
-        alterId: 1
-    # ws-path: "/" # 如果不为空则开启websocket传输层
-    # 下面两项如果填写则开启tls（需要同时填写）
-    # certificate: ./server.crt
-    # private-key: ./server.key
+  Apple:
+    type: http
+    behavior: classical
+    url: "https://cdn.jsdelivr.net/gh/blackmatrix7/ios_rule_script@master/rule/Clash/Apple/Apple_Classical.yaml"
+    path: ./ruleset/Apple.yaml
+    interval: 86400
 
-  - name: tuic-in-1
-    type: tuic
-    port: 10815
-    listen: 0.0.0.0
-    # rule: sub-rule-name1 # 默认使用 rules，如果未找到 sub-rule 则直接使用 rules
-    # proxy: proxy # 如果不为空则直接将该入站流量交由指定proxy处理(当proxy不为空时，这里的proxy名称必须合法，否则会出错)
-    # token:    # tuicV4填写（可以同时填写users）
-    #   - TOKEN
-    # users:    # tuicV5填写（可以同时填写token）
-    #   00000000-0000-0000-0000-000000000000: PASSWORD_0
-    #   00000000-0000-0000-0000-000000000001: PASSWORD_1
-    #  certificate: ./server.crt
-    #  private-key: ./server.key
-    #  congestion-controller: bbr
-    #  max-idle-time: 15000
-    #  authentication-timeout: 1000
-    #  alpn:
-    #    - h3
-    #  max-udp-relay-packet-size: 1500
+  Microsoft:
+    type: http
+    behavior: classical
+    url: "https://cdn.jsdelivr.net/gh/blackmatrix7/ios_rule_script@master/rule/Clash/Microsoft/Microsoft.yaml"
+    path: ./ruleset/Microsoft.yaml
+    interval: 86400
 
-  - name: tunnel-in-1
-    type: tunnel
-    port: 10816
-    listen: 0.0.0.0
-    # rule: sub-rule-name1 # 默认使用 rules，如果未找到 sub-rule 则直接使用 rules
-    # proxy: proxy # 如果不为空则直接将该入站流量交由指定proxy处理(当proxy不为空时，这里的proxy名称必须合法，否则会出错)
-    network: [tcp, udp]
-    target: target.com
+  Amazon:
+    type: http
+    behavior: classical
+    url: "https://cdn.jsdelivr.net/gh/blackmatrix7/ios_rule_script@master/rule/Clash/Amazon/Amazon.yaml"
+    path: ./ruleset/Amazon.yaml
+    interval: 86400
 
-  - name: tun-in-1
-    type: tun
-    # rule: sub-rule-name1 # 默认使用 rules，如果未找到 sub-rule 则直接使用 rules
-    # proxy: proxy # 如果不为空则直接将该入站流量交由指定proxy处理(当proxy不为空时，这里的proxy名称必须合法，否则会出错)
-    stack: system # gvisor / lwip
-    dns-hijack:
-      - 0.0.0.0:53 # 需要劫持的 DNS
-    # auto-detect-interface: false # 自动识别出口网卡
-    # auto-route: false # 配置路由表
-    # mtu: 9000 # 最大传输单元
-    inet4-address: # 必须手动设置ipv4地址段
-      - 198.19.0.1/30
-    inet6-address: # 必须手动设置ipv6地址段
-      - "fdfe:dcba:9877::1/126"
-    # strict_route: true # 将所有连接路由到tun来防止泄漏，但你的设备将无法其他设备被访问
-    #   inet4_route_address: # 启用 auto_route 时使用自定义路由而不是默认路由
-    #     - 0.0.0.0/1
-    #     - 128.0.0.0/1
-    #   inet6_route_address: # 启用 auto_route 时使用自定义路由而不是默认路由
-    #     - "::/1"
-    #     - "8000::/1"
-    # endpoint_independent_nat: false # 启用独立于端点的 NAT
-    # include_uid: # UID 规则仅在 Linux 下被支持，并且需要 auto_route
-    # - 0
-    # include_uid_range: # 限制被路由的的用户范围
-    # - 1000-99999
-    # exclude_uid: # 排除路由的的用户
-    # - 1000
-    # exclude_uid_range: # 排除路由的的用户范围
-    # - 1000-99999
+  AmazonIP:
+    type: http
+    behavior: ipcidr
+    url: "https://cdn.jsdelivr.net/gh/blackmatrix7/ios_rule_script@master/rule/Clash/AmazonIP/AmazonIP_IP.yaml"
+    path: ./ruleset/AmazonIP.yaml
+    interval: 86400
 
-    # Android 用户和应用规则仅在 Android 下被支持
-    # 并且需要 auto_route
+  Bing:
+    type: http
+    behavior: classical
+    url: "https://cdn.jsdelivr.net/gh/blackmatrix7/ios_rule_script@master/rule/Clash/Bing/Bing.yaml"
+    path: ./ruleset/Bing.yaml
+    interval: 86400
 
-    # include_android_user: # 限制被路由的 Android 用户
-    # - 0
-    # - 10
-    # include_package: # 限制被路由的 Android 应用包名
-    # - com.android.chrome
-    # exclude_package: # 排除被路由的 Android 应用包名
-    # - com.android.captiveportallogin
-# 入口配置与 Listener 等价，传入流量将和 socks,mixed 等入口一样按照 mode 所指定的方式进行匹配处理
-# shadowsocks,vmess 入口配置（传入流量将和socks,mixed等入口一样按照mode所指定的方式进行匹配处理）
-# ss-config: ss://2022-blake3-aes-256-gcm:vlmpIPSyHH6f4S8WVPdRIHIlzmB+GIRfoH3aNJ/t9Gg=@:23456
-# vmess-config: vmess://1:9d0cb9d0-964f-4ef6-897d-6c6b3ccf9e68@:12345
+  OpenAI:
+    type: http
+    behavior: classical
+    url: "https://cdn.jsdelivr.net/gh/blackmatrix7/ios_rule_script@master/rule/Clash/OpenAI/OpenAI.yaml"
+    path: ./ruleset/OpenAI.yaml
+    interval: 86400
 
-# tuic服务器入口（传入流量将和socks,mixed等入口一样按照mode所指定的方式进行匹配处理）
-# tuic-server:
-#  enable: true
-#  listen: 127.0.0.1:10443
-#  token:    # tuicV4填写（可以同时填写users）
-#    - TOKEN
-#  users:    # tuicV5填写（可以同时填写token）
-#    00000000-0000-0000-0000-000000000000: PASSWORD_0
-#    00000000-0000-0000-0000-000000000001: PASSWORD_1
-#  certificate: ./server.crt
-#  private-key: ./server.key
-#  congestion-controller: bbr
-#  max-idle-time: 15000
-#  authentication-timeout: 1000
-#  alpn:
-#    - h3
-#  max-udp-relay-packet-size: 1500
+  Github:
+    type: http
+    behavior: classical
+    url: "https://cdn.jsdelivr.net/gh/blackmatrix7/ios_rule_script@master/rule/Clash/GitHub/GitHub.yaml"
+    path: ./ruleset/Github.yaml
+    interval: 86400
+
+  YouTube:
+    type: http
+    behavior: classical
+    url: "https://cdn.jsdelivr.net/gh/blackmatrix7/ios_rule_script@master/rule/Clash/YouTube/YouTube.yaml"
+    path: ./ruleset/YouTube.yaml
+    interval: 86400
+
+  YouTubeMusic:
+    type: http
+    behavior: classical
+    url: "https://cdn.jsdelivr.net/gh/blackmatrix7/ios_rule_script@master/rule/Clash/YouTubeMusic/YouTubeMusic.yaml"
+    path: ./ruleset/YouTubeMusic.yaml
+    interval: 86400
+
+  Netflix:
+    type: http
+    behavior: classical
+    url: "https://cdn.jsdelivr.net/gh/blackmatrix7/ios_rule_script@master/rule/Clash/Netflix/Netflix_Classical.yaml"
+    path: ./ruleset/Netflix.yaml
+    interval: 86400
+
+  Discovery:
+    type: http
+    behavior: classical
+    url: "https://cdn.jsdelivr.net/gh/blackmatrix7/ios_rule_script@master/rule/Clash/Disney/Disney.yaml"
+    path: ./ruleset/Discovery.yaml
+    interval: 86400
+
+  AmazonPrimeVideo:
+    type: http
+    behavior: classical
+    url: "https://cdn.jsdelivr.net/gh/blackmatrix7/ios_rule_script@master/rule/Clash/AmazonPrimeVideo/AmazonPrimeVideo.yaml"
+    path: ./ruleset/AmazonPrimeVideo.yaml
+    interval: 86400
+
+  Hulu:
+    type: http
+    behavior: classical
+    url: "https://cdn.jsdelivr.net/gh/blackmatrix7/ios_rule_script@master/rule/Clash/Hulu/Hulu.yaml"
+    path: ./ruleset/Hulu.yaml
+    interval: 86400
+
+  HBO:
+    type: http
+    behavior: classical
+    url: "https://cdn.jsdelivr.net/gh/blackmatrix7/ios_rule_script@master/rule/Clash/HBO/HBO.yaml"
+    path: ./ruleset/HBO.yaml
+    interval: 86400
+
+  Pandora:
+    type: http
+    behavior: classical
+    url: "https://cdn.jsdelivr.net/gh/blackmatrix7/ios_rule_script@master/rule/Clash/Pandora/Pandora.yaml"
+    path: ./ruleset/Pandora.yaml
+    interval: 86400
+
+  Bahamut:
+    type: http
+    behavior: classical
+    url: "https://cdn.jsdelivr.net/gh/blackmatrix7/ios_rule_script@master/rule/Clash/Bahamut/Bahamut.yaml"
+    path: ./ruleset/Bahamut.yaml
+    interval: 86400
+
+  GameDownloadCN:
+    type: http
+    behavior: domain
+    url: "https://cdn.jsdelivr.net/gh/blackmatrix7/ios_rule_script@master/rule/Clash/Game/GameDownloadCN/GameDownloadCN.yaml"
+    path: ./ruleset/GameDownloadCN.yaml
+    interval: 86400
+
+  Telegram:
+    type: http
+    behavior: classical
+    url: "https://cdn.jsdelivr.net/gh/blackmatrix7/ios_rule_script@master/rule/Clash/Telegram/Telegram.yaml"
+    path: ./ruleset/Telegram.yaml
+    interval: 86400
+
+  Pixiv:
+    type: http
+    behavior: classical
+    url: "https://cdn.jsdelivr.net/gh/blackmatrix7/ios_rule_script@master/rule/Clash/Pixiv/Pixiv.yaml"
+    path: ./ruleset/Pixiv.yaml
+    interval: 86400
+
+  BiliBili:
+    type: http
+    behavior: classical
+    url: "https://cdn.jsdelivr.net/gh/blackmatrix7/ios_rule_script@master/rule/Clash/BiliBili/BiliBili.yaml"
+    path: ./ruleset/BiliBili.yaml
+    interval: 86400
+
+  EHentai:
+    type: http
+    behavior: classical
+    url: "https://cdn.jsdelivr.net/gh/alex177027/clash-meta-rules@latest/EHentai.yaml"
+    path: ./ruleset/EHentai.yaml
+    interval: 86400
+
+  Niconico:
+    type: http
+    behavior: classical
+    url: "https://cdn.jsdelivr.net/gh/blackmatrix7/ios_rule_script@master/rule/Clash/Niconico/Niconico.yaml"
+    path: ./ruleset/Niconico.yaml
+    interval: 86400
+
+  PT:
+    type: http
+    behavior: classical
+    url: "https://cdn.jsdelivr.net/gh/blackmatrix7/ios_rule_script@master/rule/Clash/PrivateTracker/PrivateTracker.yaml"
+    path: ./ruleset/PT.yaml
+    interval: 86400
+
+  TikTok:
+    type: http
+    behavior: classical
+    url: "https://cdn.jsdelivr.net/gh/blackmatrix7/ios_rule_script@master/rule/Clash/TikTok/TikTok.yaml"
+    path: ./ruleset/TikTok.yaml
+    interval: 86400
+
+  Discord:
+    type: http
+    behavior: classical
+    url: "https://cdn.jsdelivr.net/gh/blackmatrix7/ios_rule_script@master/rule/Clash/Discord/Discord.yaml"
+    path: ./ruleset/Discord.yaml
+    interval: 86400  
+
+rules:
+  - RULE-SET,private,DIRECT #私有网络
+  - RULE-SET,lancidr,DIRECT #局域网 IP 及保留 IP 地址列表
+  - RULE-SET,Direct,DIRECT #直连
+
+  #个人偏好
+  - RULE-SET,Marketing,🎯广告拦截
+  - DOMAIN-SUFFIX,kox.moe,🛫海外流量
+
+  #偷渡
+  - RULE-SET,BiliBili,📺️哔哩哔哩
+
+  #PT
+  - RULE-SET,PT,⬇PT下载
+
+  #国外服务
+  - RULE-SET,EHentai,🥵EHentai #EHentai
+  - RULE-SET,Pixiv,🛫海外流量
+  - RULE-SET,Niconico,🥵Niconico
+  - RULE-SET,Discord,🛫海外流量
+
+  #Apple
+  - RULE-SET,Apple,🍎苹果服务
+  #Telegram
+  - RULE-SET,Telegram,✈️Telegram
+  #Twitter
+  - RULE-SET,TikTok,💃TikTok
+  #OpenAI
+  - RULE-SET,OpenAI,🧜‍♀️OpenAI
+  #Microsoft
+  - RULE-SET,Microsoft,🐳Microsoft
+  - RULE-SET,Bing,🐳Microsoft
+
+  #Github
+  - RULE-SET,Github,🛫海外流量
+
+  #海外流媒体
+  - RULE-SET,YouTube,🐱Google
+  - RULE-SET,YouTubeMusic,🐱Google
+  #Netflix
+  - RULE-SET,Netflix,📼海外流媒体
+  #Disney+
+  - RULE-SET,Discovery,📼海外流媒体
+  #Hulu
+  - RULE-SET,Hulu,📼海外流媒体
+  #HBO
+  - RULE-SET,HBO,📼海外流媒体
+  #Pandora
+  - RULE-SET,Pandora,📼海外流媒体
+  #PrimeVideo
+  - RULE-SET,AmazonPrimeVideo,📼海外流媒体
+  #巴哈姆特
+  - RULE-SET,Bahamut,📺️巴哈姆特
+  #Game
+  - RULE-SET,GameDownloadCN,DIRECT #游戏下载
+  #Amazon
+  - RULE-SET,Amazon,🛫海外流量
+  - RULE-SET,AmazonIP,🛫海外流量
+
+  #Google
+  - RULE-SET,Google,🐱Google
+
+  #补充
+  - RULE-SET,ChinaMax,DIRECT
+  - GEOIP,CN,DIRECT
+  - MATCH,🐟️漏网之鱼
