@@ -450,46 +450,11 @@ rule-providers:
     path: ./ruleset/YouTubeMusic.yaml
     interval: 86400
 
-  Netflix:
+  GlobalMedia:
     type: http
     behavior: classical
-    url: "https://cdn.jsdelivr.net/gh/blackmatrix7/ios_rule_script@master/rule/Clash/Netflix/Netflix_Classical.yaml"
+    url: "https://cdn.jsdelivr.net/gh/blackmatrix7/ios_rule_script@master/rule/Clash/GlobalMedia/GlobalMedia.yaml"
     path: ./ruleset/Netflix.yaml
-    interval: 86400
-
-  Discovery:
-    type: http
-    behavior: classical
-    url: "https://cdn.jsdelivr.net/gh/blackmatrix7/ios_rule_script@master/rule/Clash/Disney/Disney.yaml"
-    path: ./ruleset/Discovery.yaml
-    interval: 86400
-
-  AmazonPrimeVideo:
-    type: http
-    behavior: classical
-    url: "https://cdn.jsdelivr.net/gh/blackmatrix7/ios_rule_script@master/rule/Clash/AmazonPrimeVideo/AmazonPrimeVideo.yaml"
-    path: ./ruleset/AmazonPrimeVideo.yaml
-    interval: 86400
-
-  Hulu:
-    type: http
-    behavior: classical
-    url: "https://cdn.jsdelivr.net/gh/blackmatrix7/ios_rule_script@master/rule/Clash/Hulu/Hulu.yaml"
-    path: ./ruleset/Hulu.yaml
-    interval: 86400
-
-  HBO:
-    type: http
-    behavior: classical
-    url: "https://cdn.jsdelivr.net/gh/blackmatrix7/ios_rule_script@master/rule/Clash/HBO/HBO.yaml"
-    path: ./ruleset/HBO.yaml
-    interval: 86400
-
-  Pandora:
-    type: http
-    behavior: classical
-    url: "https://cdn.jsdelivr.net/gh/blackmatrix7/ios_rule_script@master/rule/Clash/Pandora/Pandora.yaml"
-    path: ./ruleset/Pandora.yaml
     interval: 86400
 
   Bahamut:
@@ -497,13 +462,6 @@ rule-providers:
     behavior: classical
     url: "https://cdn.jsdelivr.net/gh/blackmatrix7/ios_rule_script@master/rule/Clash/Bahamut/Bahamut.yaml"
     path: ./ruleset/Bahamut.yaml
-    interval: 86400
-
-  GameDownloadCN:
-    type: http
-    behavior: domain
-    url: "https://cdn.jsdelivr.net/gh/blackmatrix7/ios_rule_script@master/rule/Clash/Game/GameDownloadCN/GameDownloadCN.yaml"
-    path: ./ruleset/GameDownloadCN.yaml
     interval: 86400
 
   Telegram:
@@ -563,6 +521,8 @@ rule-providers:
     interval: 86400  
 
 rules:
+  - DOMAIN-SUFFIX,injections.adguard.org,DIRECT
+  - DOMAIN-SUFFIX,local.adguard.org,DIRECT
   - RULE-SET,private,DIRECT #私有网络
   - RULE-SET,lancidr,DIRECT #局域网 IP 及保留 IP 地址列表
   - RULE-SET,Direct,DIRECT #直连
@@ -601,22 +561,9 @@ rules:
   #海外流媒体
   - RULE-SET,YouTube,🐱Google
   - RULE-SET,YouTubeMusic,🐱Google
-  #Netflix
-  - RULE-SET,Netflix,📼海外流媒体
-  #Disney+
-  - RULE-SET,Discovery,📼海外流媒体
-  #Hulu
-  - RULE-SET,Hulu,📼海外流媒体
-  #HBO
-  - RULE-SET,HBO,📼海外流媒体
-  #Pandora
-  - RULE-SET,Pandora,📼海外流媒体
-  #PrimeVideo
-  - RULE-SET,AmazonPrimeVideo,📼海外流媒体
+  - RULE-SET,GlobalMedia,📼海外流媒体
   #巴哈姆特
   - RULE-SET,Bahamut,📺️巴哈姆特
-  #Game
-  - RULE-SET,GameDownloadCN,DIRECT #游戏下载
   #Amazon
   - RULE-SET,Amazon,🛫海外流量
   - RULE-SET,AmazonIP,🛫海外流量
