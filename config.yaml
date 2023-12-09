@@ -18,7 +18,7 @@ dns:
   ipv6: false # default is false
   listen: 0.0.0.0:53
   enhanced-mode: fake-ip # or redir-host
-  store-fake-ip: false
+  store-fake-ip: true
   fake-ip-range: 198.18.0.1/16 # if you don't know what it is, don't change it
   nameserver:
     - https://doh.pub/dns-query
@@ -131,56 +131,48 @@ proxy-groups:
   use:
   - sub1
   filter: "(?i)港|hk|hongkong|hong kong"
-  strategy: consistent-hashing
 
 - name: "🇹🇼台湾 TaiWan"
   type: select
   use:
   - sub1
   filter: "(?i)台|tw|taiwan"
-  strategy: consistent-hashing
 
 - name: "🇯🇵日本 Japan"
   type: select
   use:
   - sub1
   filter: "(?i)日本|jp|japan"
-  strategy: consistent-hashing
 
 - name: "🇺🇸美国 USA"
   type: select
   use:
   - sub1
   filter: "(?i)美|us|unitedstates|united states"
-  strategy: consistent-hashing
 
 - name: "🇬🇧英国 UK"
   type: select
   use:
   - sub1
   filter: "(?i)英|uk|unitedkingdom|united kingdom"
-  strategy: consistent-hashing
 
 - name: "🇸🇬新加坡 Singapore"
   type: select
   use:
   - sub1
   filter: "(?i)(新|sg|singapore)"
-  strategy: consistent-hashing
 
 - name: "🇰🇷韩国  Korea"
   type: select
   use:
   - sub1
   filter: "(?i)(韩|kr|korea)"
-  strategy: consistent-hashing
 
-#clash premium内核不支持此特性
 - name: "🗺️其它地区"
   type: select
   use:
   - sub1
-  exclude-filter: "(?i)港|hk|hongkong|hong kong|台|tw|taiwan|日本|jp|japan|美|us|unitedstates|united states|新|sg|singapore|韩|kr|korea|英|uk|unitedkingdom|united kingdom"
+  filter: "^(?!.*(?i)(港|hk|hongkong|hong kong|台|tw|taiwan|日本|jp|japan|美|us|unitedstates|united states|新|sg|singapore|韩|kr|korea|英|uk|unitedkingdom|united kingdom)).*$"
 
 - name: "🐱Google"
   type: select
