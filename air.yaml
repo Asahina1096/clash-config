@@ -5,29 +5,39 @@ mode: rule
 log-level: info
 external-controller: "127.0.0.1:9090"
 
-experimental: # experimental feature
-  ignore-resolve-fail: true # ignore dns resolve fail, default value is true
+experimental:
+  ignore-resolve-fail: true
 
 hosts:
   '*.clash.dev': '127.0.0.1'
   'alpha.clash.dev': '::1'
 
 dns:
-  enable: true # set true to enable dns (default is false)
+  enable: true 
+  cache-algorithm: arc
   prefer-h3: true
-  ipv6: false # default is false
+  ipv6: false
   listen: 0.0.0.0:53
   enhanced-mode: fake-ip # or redir-host
   store-fake-ip: true
-  fake-ip-range: 198.18.0.1/16 # if you don't know what it is, don't change it
+  fake-ip-range: 198.18.0.1/16 
+  default-nameserver:
+    - 119.29.29.29
+    - 223.5.5.5
+    - 180.184.1.1
+    - 180.76.76.76
   nameserver:
     - https://doh.pub/dns-query
     - https://dns.alidns.com
-  fallback: # concurrent request with nameserver, fallback used when GEOIP country isn't CN
+    - https://doh.360.cn
+  fallback: 
     - https://8.8.8.8/dns-query
     - https://1.1.1.1/dns-query
+    - https://dns.google/dns-query
+    - https://cloudflare-dns.com/dns-query
+    - https://doh.dns.sb/dns-query
   fallback-filter:
-    geoip: true # default
+    geoip: true
     geoip-code: CN
     geosite:
       - gfw
@@ -36,286 +46,39 @@ dns:
 
 tun:
   enable: true
-  stack: system
+  stack: mixed
   dns-hijack:
-    - 0.0.0.0:53 # 需要劫持的 DNS
+    - 0.0.0.0:53
   auto-detect-interface: true
   auto-route: true
   strict-route: true
 
-sniffer:
-  enable: true
-  force-dns-mapping: true
-  parse-pure-ip: true
-  override-destination: false
-  sniff:
-    HTTP:
-      ports: [80, 8080-8880]
-      override-destination: true
-    TLS:
-      ports: [443, 8443]
-  force-domain:
-    - +.v2ex.com
-  skip-domain:
-    - Mijia Cloud
-
-proxy-providers:
-  sub1: #组名
-    type: http # url订阅的方式
-    path: ./profiles/sub1.yml # 配置文件缓存的位置
-    url: # 网络上配置文件的位置
-    interval: 86400 # 自动更新时间
-    health-check: # 健康检测，检测失败就不会在自动选择中用该组代理
-      enable: true
-      url: https://cp.cloudflare.com/
-      interval: 300 # 检测间隔
-
 proxies:
-  - name: example
-    type: ss
-    server: 
-    port: 
-    cipher: aes-128-gcm
-    password: 
-    udp: true
-    udp-over-tcp: true
-    health-check: # 健康检测，检测失败就不会在自动选择中用该组代理
-      enable: true
-      url: https://cp.cloudflare.com/
-      interval: 300 # 检测间隔
+
 
 proxy-groups:
 - name: "🛫海外流量"
   type: select
   proxies:
-    - "链式代理⛓️"
-    - "🇭🇰香港 HongKong"
-    - "🇹🇼台湾 TaiWan"
-    - "🇯🇵日本 Japan"
-    - "🇺🇸美国 USA"
-    - "🇬🇧英国 UK"
-    - "🇸🇬新加坡 Singapore"
-    - "🇰🇷韩国  Korea"
-    - "🗺️其它地区"
+
+
+- name: "Ⓜ️微软服务"
+  type: select
+  proxies:
     - DIRECT
-
-- name: "链式代理⛓️"
-  type: relay
-  proxies:
-    - "Ready Boost⚡"
-    - "自建🏠"
-
-- name: "自建🏠"
-  type: select
-  tolerance: 50
-  proxies:
-  - example
-
-- name: "Ready Boost⚡"
-  type: select
-  tolerance: 50
-  proxies:
-    - "🇭🇰香港 HongKong"
-    - "🇹🇼台湾 TaiWan"
-    - "🇯🇵日本 Japan"
-    - "🇺🇸美国 USA"
-    - "🇬🇧英国 UK"
-    - "🇸🇬新加坡 Singapore"
-    - "🇰🇷韩国  Korea"
-    - "🗺️其它地区"
-    - DIRECT
-
-#代理地区
-- name: "🇭🇰香港 HongKong"
-  type: select
-  use:
-  - sub1
-  filter: "(?i)港|hk|hongkong|hong kong"
-
-- name: "🇹🇼台湾 TaiWan"
-  type: select
-  use:
-  - sub1
-  filter: "(?i)台|tw|taiwan"
-
-- name: "🇯🇵日本 Japan"
-  type: select
-  use:
-  - sub1
-  filter: "(?i)日本|jp|japan"
-
-- name: "🇺🇸美国 USA"
-  type: select
-  use:
-  - sub1
-  filter: "(?i)美|us|unitedstates|united states"
-
-- name: "🇬🇧英国 UK"
-  type: select
-  use:
-  - sub1
-  filter: "(?i)英|uk|unitedkingdom|united kingdom"
-
-- name: "🇸🇬新加坡 Singapore"
-  type: select
-  use:
-  - sub1
-  filter: "(?i)(新|sg|singapore)"
-
-- name: "🇰🇷韩国  Korea"
-  type: select
-  use:
-  - sub1
-  filter: "(?i)(韩|kr|korea)"
-
-- name: "🗺️其它地区"
-  type: select
-  use:
-  - sub1
-  filter: "^(?!.*(?i)(港|hk|hongkong|hong kong|台|tw|taiwan|日本|jp|japan|美|us|unitedstates|united states|新|sg|singapore|韩|kr|korea|英|uk|unitedkingdom|united kingdom)).*$"
-
-- name: "🐱Google"
-  type: select
-  proxies:
     - "🛫海外流量"
-    - "🇭🇰香港 HongKong"
-    - "🇹🇼台湾 TaiWan"
-    - "🇯🇵日本 Japan"
-    - "🇺🇸美国 USA"
-    - "🇸🇬新加坡 Singapore"
-    - "🇰🇷韩国  Korea"
-    - "🇬🇧英国 UK"
-    - "🗺️其它地区"
-
-- name: "🐳Microsoft"
-  type: select
-  proxies:
-    - "🛫海外流量"
-    - "🇭🇰香港 HongKong"
-    - "🇹🇼台湾 TaiWan"
-    - "🇯🇵日本 Japan"
-    - "🇺🇸美国 USA"
-    - "🇸🇬新加坡 Singapore"
-    - "🇰🇷韩国  Korea"
-    - "🇬🇧英国 UK"
-    - "🗺️其它地区"
-    - DIRECT
 
 - name: "🍎苹果服务"
   type: select
   proxies:
     - DIRECT
     - "🛫海外流量"
-    - "🇭🇰香港 HongKong"
-    - "🇹🇼台湾 TaiWan"
-    - "🇯🇵日本 Japan"
-    - "🇺🇸美国 USA"
-    - "🇸🇬新加坡 Singapore"
-    - "🇰🇷韩国  Korea"
-    - "🇬🇧英国 UK"
-    - "🗺️其它地区"
-
-- name: "🧜‍♀️OpenAI"
-  type: select
-  proxies:
-    - "🛫海外流量"
-    - "🇭🇰香港 HongKong"
-    - "🇹🇼台湾 TaiWan"
-    - "🇯🇵日本 Japan"
-    - "🇺🇸美国 USA"
-    - "🇸🇬新加坡 Singapore"
-    - "🇰🇷韩国  Korea"
-    - "🇬🇧英国 UK"
-    - "🗺️其它地区"
-
-- name: "✈️Telegram"
-  type: select
-  proxies:
-    - "🛫海外流量"
-    - "🇭🇰香港 HongKong"
-    - "🇹🇼台湾 TaiWan"
-    - "🇯🇵日本 Japan"
-    - "🇺🇸美国 USA"
-    - "🇸🇬新加坡 Singapore"
-    - "🇰🇷韩国  Korea"
-    - "🇬🇧英国 UK"
-    - "🗺️其它地区"
-
-- name: "💃TikTok"
-  type: select
-  proxies:
-    - "🛫海外流量"
-    - "🇭🇰香港 HongKong"
-    - "🇹🇼台湾 TaiWan"
-    - "🇯🇵日本 Japan"
-    - "🇺🇸美国 USA"
-    - "🇸🇬新加坡 Singapore"
-    - "🇰🇷韩国  Korea"
-    - "🇬🇧英国 UK"
-    - "🗺️其它地区"
-
-- name: "📼海外流媒体"
-  type: select
-  proxies:
-    - "🛫海外流量"
-    - "🇭🇰香港 HongKong"
-    - "🇹🇼台湾 TaiWan"
-    - "🇯🇵日本 Japan"
-    - "🇺🇸美国 USA"
-    - "🇸🇬新加坡 Singapore"
-    - "🇰🇷韩国  Korea"
-    - "🇬🇧英国 UK"
-    - "🗺️其它地区"
 
 - name: "📺️哔哩哔哩"
   type: select
   proxies:
     - DIRECT
-    - "🗺️其它地区"
-  use:
-  - sub1
-  filter: "(?i)港|hk|hongkong|hong kong|台|tw|taiwan"
-
-- name: "📺️巴哈姆特"
-  type: select
-  use:
-  - sub1
-  filter: "(?i)台|tw|taiwan"
-  proxies:
-  - "🛫海外流量"
-
-- name: "🥵Niconico"
-  type: select
-  use:
-  - sub1
-  filter: "(?i)日本|jp|japan"
-  proxies:
-  - "🛫海外流量"
-
-- name: "🥵EHentai"
-  type: select
-  proxies:
     - "🛫海外流量"
-    - "🇭🇰香港 HongKong"
-    - "🇹🇼台湾 TaiWan"
-    - "🇺🇸美国 USA"
-    - "🇸🇬新加坡 Singapore"
-    - "🇰🇷韩国  Korea"
-    - "🇬🇧英国 UK"
-    - "🗺️其它地区"
-
-- name: "⬇PT下载"
-  type: select
-  proxies:
-    - "🛫海外流量"
-    - "🇭🇰香港 HongKong"
-    - "🇹🇼台湾 TaiWan"
-    - "🇯🇵日本 Japan"
-    - "🇺🇸美国 USA"
-    - "🇸🇬新加坡 Singapore"
-    - "🇰🇷韩国  Korea"
-    - "🇬🇧英国 UK"
-    - "🗺️其它地区"
 
 - name: "🎯广告拦截"
   type: select
@@ -510,11 +273,25 @@ rule-providers:
     behavior: classical
     url: "https://cdn.jsdelivr.net/gh/blackmatrix7/ios_rule_script@master/rule/Clash/Discord/Discord.yaml"
     path: ./ruleset/Discord.yaml
-    interval: 86400  
+    interval: 86400
+
+  ChinaDownloadCDN:
+    type: http
+    behavior: classical
+    url: "https://gitlab.com/lodepuly/vpn_tool/-/raw/master/Tool/Clash/Rule/ChinaDownloadCDN.yaml"
+    path: ./ruleset/ChinaDownloadCDN.yaml
+    interval: 86400
+
+  InternationalDownloadCDN:
+    type: http
+    behavior: classical
+    url: "https://gitlab.com/lodepuly/vpn_tool/-/raw/master/Tool/Clash/Rule/InternationalDownloadCDN.yaml"
+    path: ./ruleset/InternationalDownloadCDN.yaml
+    interval: 86400
 
 rules:
-  - DOMAIN-SUFFIX,injections.adguard.org,DIRECT
-  - DOMAIN-SUFFIX,local.adguard.org,DIRECT
+  - DOMAIN,injections.adguard.org,DIRECT,no-resolve
+  - DOMAIN,local.adguard.org,DIRECT,no-resolve
   - RULE-SET,private,DIRECT #私有网络
   - RULE-SET,lancidr,DIRECT #局域网 IP 及保留 IP 地址列表
   - RULE-SET,Direct,DIRECT #直连
@@ -522,48 +299,48 @@ rules:
   #个人偏好
   - RULE-SET,Marketing,🎯广告拦截
   - DOMAIN-SUFFIX,kox.moe,🛫海外流量
-
-  #偷渡
-  - RULE-SET,BiliBili,📺️哔哩哔哩
+  
+  #游戏下载
+  - RULE-SET,ChinaDownloadCDN,DIRECT
+  - RULE-SET,InternationalDownloadCDN,🛫海外流量
 
   #PT
-  - RULE-SET,PT,⬇PT下载
+  - RULE-SET,PT,🛫海外流量
 
   #国外服务
-  - RULE-SET,EHentai,🥵EHentai #EHentai
+  - RULE-SET,EHentai,🛫海外流量 #EHentai
   - RULE-SET,Pixiv,🛫海外流量
-  - RULE-SET,Niconico,🥵Niconico
+  - RULE-SET,Niconico,🛫海外流量
   - RULE-SET,Discord,🛫海外流量
 
   #Apple
   - RULE-SET,Apple,🍎苹果服务
   #Telegram
-  - RULE-SET,Telegram,✈️Telegram
+  - RULE-SET,Telegram,🛫海外流量
   #Twitter
-  - RULE-SET,TikTok,💃TikTok
+  - RULE-SET,TikTok,🛫海外流量
   #OpenAI
-  - RULE-SET,OpenAI,🧜‍♀️OpenAI
+  - RULE-SET,OpenAI,🛫海外流量
   #Microsoft
-  - RULE-SET,Microsoft,🐳Microsoft
-  - RULE-SET,Bing,🐳Microsoft
+  - RULE-SET,Microsoft,Ⓜ️微软服务
+  - RULE-SET,Bing,Ⓜ️微软服务
 
   #Github
   - RULE-SET,Github,🛫海外流量
 
   #海外流媒体
-  - RULE-SET,YouTube,🐱Google
-  - RULE-SET,YouTubeMusic,🐱Google
-  - RULE-SET,GlobalMedia,📼海外流媒体
+  - RULE-SET,YouTube,🛫海外流量
+  - RULE-SET,YouTubeMusic,🛫海外流量
+  - RULE-SET,GlobalMedia,🛫海外流量
   #巴哈姆特
-  - RULE-SET,Bahamut,📺️巴哈姆特
+  - RULE-SET,Bahamut,🛫海外流量
   #Amazon
   - RULE-SET,Amazon,🛫海外流量
   - RULE-SET,AmazonIP,🛫海外流量
 
   #Google
-  - RULE-SET,Google,🐱Google
+  - RULE-SET,Google,🛫海外流量
 
   #补充
   - RULE-SET,ChinaMax,DIRECT
-  - GEOIP,CN,DIRECT
   - MATCH,🐟️漏网之鱼
