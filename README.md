@@ -4,7 +4,7 @@
 
 ## 感谢以下项目
 
-### 规则：
+### 规则
 
 [meta-rules-dat](https://github.com/MetaCubeX/meta-rules-dat)
 |
@@ -15,4 +15,3 @@
 [KimmyXYC/clash-rules](https://github.com/KimmyXYC/clash-rules)
 |
 [ios_rule_script](https://github.com/blackmatrix7/ios_rule_script)
-
