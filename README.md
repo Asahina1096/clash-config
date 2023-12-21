@@ -1,6 +1,6 @@
 # clash-meta-rules
 
-添加了去广告与常见分流的clash规则，配合clash-meta食用最佳
+添加了常见分流的clash规则，配合clash-meta食用最佳
 
 ## 感谢以下项目
 
@@ -15,9 +15,4 @@
 [KimmyXYC/clash-rules](https://github.com/KimmyXYC/clash-rules)
 |
 [ios_rule_script](https://github.com/blackmatrix7/ios_rule_script)
-|
-[AWAvenue-Adblock-Rule](https://github.com/TG-Twilight/AWAvenue-Adblock-Rule)
 
-### 加速：
-
-[notionfaster](https://www.notionfaster.org/)
