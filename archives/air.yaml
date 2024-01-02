@@ -1,0 +1,346 @@
+mixed-port: 7890
+allow-lan: false
+bind-address: '*'
+mode: rule
+log-level: info
+external-controller: "127.0.0.1:9090"
+
+experimental:
+  ignore-resolve-fail: true
+
+hosts:
+  '*.clash.dev': '127.0.0.1'
+  'alpha.clash.dev': '::1'
+
+dns:
+  enable: true 
+  cache-algorithm: arc
+  prefer-h3: true
+  ipv6: false
+  listen: 0.0.0.0:53
+  enhanced-mode: fake-ip # or redir-host
+  store-fake-ip: true
+  fake-ip-range: 198.18.0.1/16 
+  default-nameserver:
+    - 119.29.29.29
+    - 223.5.5.5
+    - 180.184.1.1
+    - 180.76.76.76
+  nameserver:
+    - https://doh.pub/dns-query
+    - https://dns.alidns.com
+    - https://doh.360.cn
+  fallback: 
+    - https://8.8.8.8/dns-query
+    - https://1.1.1.1/dns-query
+    - https://dns.google/dns-query
+    - https://cloudflare-dns.com/dns-query
+    - https://doh.dns.sb/dns-query
+  fallback-filter:
+    geoip: true
+    geoip-code: CN
+    geosite:
+      - gfw
+    ipcidr:
+      - 240.0.0.0/4
+
+tun:
+  enable: true
+  stack: mixed
+  dns-hijack:
+    - 0.0.0.0:53
+  auto-detect-interface: true
+  auto-route: true
+  strict-route: true
+
+proxies:
+
+
+proxy-groups:
+- name: "🛫海外流量"
+  type: select
+  proxies:
+
+
+- name: "Ⓜ️微软服务"
+  type: select
+  proxies:
+    - DIRECT
+    - "🛫海外流量"
+
+- name: "🍎苹果服务"
+  type: select
+  proxies:
+    - DIRECT
+    - "🛫海外流量"
+
+- name: "📺️哔哩哔哩"
+  type: select
+  proxies:
+    - DIRECT
+    - "🛫海外流量"
+
+- name: "🎯广告拦截"
+  type: select
+  proxies:
+    - REJECT
+    - DIRECT
+
+- name: "🐟️漏网之鱼"
+  type: select
+  proxies:
+    - "🛫海外流量"
+    - DIRECT
+
+geodata-mode: true
+geox-url:
+  geoip: "https://fastly.jsdelivr.net/gh/MetaCubeX/meta-rules-dat@release/geoip.dat"
+  geosite: "https://fastly.jsdelivr.net/gh/MetaCubeX/meta-rules-dat@release/geosite.dat"
+  mmdb: "https://fastly.jsdelivr.net/gh/MetaCubeX/meta-rules-dat@release/country.mmdb"
+
+rule-providers:
+  Direct:
+    type: http
+    behavior: classical
+    url: "https://cdn.jsdelivr.net/gh/Loyalsoldier/clash-rules@release/applications.txt"
+    path: ./ruleset/Direct.yaml
+    interval: 86400
+
+  Marketing: #思杰马克丁软件
+    type: http
+    behavior: classical
+    url: "https://cdn.jsdelivr.net/gh/blackmatrix7/ios_rule_script@master/rule/Clash/Marketing/Marketing.yaml"
+    path: ./ruleset/Marketing.yaml
+    interval: 86400
+    
+  private: #私有网络
+    type: http
+    behavior: domain
+    url: "https://cdn.jsdelivr.net/gh/Loyalsoldier/clash-rules@release/private.txt"
+    path: ./ruleset/private.yaml
+    interval: 86400
+
+  lancidr: #局域网 IP 及保留 IP 地址列表
+    type: http
+    behavior: ipcidr
+    url: "https://cdn.jsdelivr.net/gh/Loyalsoldier/clash-rules@release/lancidr.txt"
+    path: ./ruleset/lancidr.yaml
+    interval: 86400
+
+  ChinaMax:
+    type: http
+    behavior: classical
+    url: "https://cdn.jsdelivr.net/gh/blackmatrix7/ios_rule_script@master/rule/Clash/ChinaMax/ChinaMax_Classical.yaml"
+    path: ./ruleset/ChinaMax.yaml
+    interval: 86400
+
+#海外服务
+  Google: 
+    type: http
+    behavior: classical
+    url: "https://cdn.jsdelivr.net/gh/blackmatrix7/ios_rule_script@master/rule/Clash/Google/Google.yaml"
+    path: ./ruleset/Google.yaml
+    interval: 86400
+
+  Apple:
+    type: http
+    behavior: classical
+    url: "https://cdn.jsdelivr.net/gh/blackmatrix7/ios_rule_script@master/rule/Clash/Apple/Apple_Classical.yaml"
+    path: ./ruleset/Apple.yaml
+    interval: 86400
+
+  Microsoft:
+    type: http
+    behavior: classical
+    url: "https://cdn.jsdelivr.net/gh/blackmatrix7/ios_rule_script@master/rule/Clash/Microsoft/Microsoft.yaml"
+    path: ./ruleset/Microsoft.yaml
+    interval: 86400
+
+  Amazon:
+    type: http
+    behavior: classical
+    url: "https://cdn.jsdelivr.net/gh/blackmatrix7/ios_rule_script@master/rule/Clash/Amazon/Amazon.yaml"
+    path: ./ruleset/Amazon.yaml
+    interval: 86400
+
+  AmazonIP:
+    type: http
+    behavior: ipcidr
+    url: "https://cdn.jsdelivr.net/gh/blackmatrix7/ios_rule_script@master/rule/Clash/AmazonIP/AmazonIP_IP.yaml"
+    path: ./ruleset/AmazonIP.yaml
+    interval: 86400
+
+  Bing:
+    type: http
+    behavior: classical
+    url: "https://cdn.jsdelivr.net/gh/blackmatrix7/ios_rule_script@master/rule/Clash/Bing/Bing.yaml"
+    path: ./ruleset/Bing.yaml
+    interval: 86400
+
+  OpenAI:
+    type: http
+    behavior: classical
+    url: "https://cdn.jsdelivr.net/gh/blackmatrix7/ios_rule_script@master/rule/Clash/OpenAI/OpenAI.yaml"
+    path: ./ruleset/OpenAI.yaml
+    interval: 86400
+
+  Github:
+    type: http
+    behavior: classical
+    url: "https://cdn.jsdelivr.net/gh/blackmatrix7/ios_rule_script@master/rule/Clash/GitHub/GitHub.yaml"
+    path: ./ruleset/Github.yaml
+    interval: 86400
+
+  YouTube:
+    type: http
+    behavior: classical
+    url: "https://cdn.jsdelivr.net/gh/blackmatrix7/ios_rule_script@master/rule/Clash/YouTube/YouTube.yaml"
+    path: ./ruleset/YouTube.yaml
+    interval: 86400
+
+  YouTubeMusic:
+    type: http
+    behavior: classical
+    url: "https://cdn.jsdelivr.net/gh/blackmatrix7/ios_rule_script@master/rule/Clash/YouTubeMusic/YouTubeMusic.yaml"
+    path: ./ruleset/YouTubeMusic.yaml
+    interval: 86400
+
+  GlobalMedia:
+    type: http
+    behavior: classical
+    url: "https://cdn.jsdelivr.net/gh/blackmatrix7/ios_rule_script@master/rule/Clash/GlobalMedia/GlobalMedia.yaml"
+    path: ./ruleset/Netflix.yaml
+    interval: 86400
+
+  Bahamut:
+    type: http
+    behavior: classical
+    url: "https://cdn.jsdelivr.net/gh/blackmatrix7/ios_rule_script@master/rule/Clash/Bahamut/Bahamut.yaml"
+    path: ./ruleset/Bahamut.yaml
+    interval: 86400
+
+  Telegram:
+    type: http
+    behavior: classical
+    url: "https://cdn.jsdelivr.net/gh/blackmatrix7/ios_rule_script@master/rule/Clash/Telegram/Telegram.yaml"
+    path: ./ruleset/Telegram.yaml
+    interval: 86400
+
+  Pixiv:
+    type: http
+    behavior: classical
+    url: "https://cdn.jsdelivr.net/gh/blackmatrix7/ios_rule_script@master/rule/Clash/Pixiv/Pixiv.yaml"
+    path: ./ruleset/Pixiv.yaml
+    interval: 86400
+
+  BiliBili:
+    type: http
+    behavior: classical
+    url: "https://cdn.jsdelivr.net/gh/blackmatrix7/ios_rule_script@master/rule/Clash/BiliBili/BiliBili.yaml"
+    path: ./ruleset/BiliBili.yaml
+    interval: 86400
+
+  EHentai:
+    type: http
+    behavior: classical
+    url: "https://cdn.jsdelivr.net/gh/alex177027/clash-meta-rules@latest/EHentai.yaml"
+    path: ./ruleset/EHentai.yaml
+    interval: 86400
+
+  Niconico:
+    type: http
+    behavior: classical
+    url: "https://cdn.jsdelivr.net/gh/blackmatrix7/ios_rule_script@master/rule/Clash/Niconico/Niconico.yaml"
+    path: ./ruleset/Niconico.yaml
+    interval: 86400
+
+  PT:
+    type: http
+    behavior: classical
+    url: "https://cdn.jsdelivr.net/gh/blackmatrix7/ios_rule_script@master/rule/Clash/PrivateTracker/PrivateTracker.yaml"
+    path: ./ruleset/PT.yaml
+    interval: 86400
+
+  TikTok:
+    type: http
+    behavior: classical
+    url: "https://cdn.jsdelivr.net/gh/blackmatrix7/ios_rule_script@master/rule/Clash/TikTok/TikTok.yaml"
+    path: ./ruleset/TikTok.yaml
+    interval: 86400
+
+  Discord:
+    type: http
+    behavior: classical
+    url: "https://cdn.jsdelivr.net/gh/blackmatrix7/ios_rule_script@master/rule/Clash/Discord/Discord.yaml"
+    path: ./ruleset/Discord.yaml
+    interval: 86400
+
+  ChinaDownloadCDN:
+    type: http
+    behavior: classical
+    url: "https://gitlab.com/lodepuly/vpn_tool/-/raw/master/Tool/Clash/Rule/ChinaDownloadCDN.yaml"
+    path: ./ruleset/ChinaDownloadCDN.yaml
+    interval: 86400
+
+  InternationalDownloadCDN:
+    type: http
+    behavior: classical
+    url: "https://gitlab.com/lodepuly/vpn_tool/-/raw/master/Tool/Clash/Rule/InternationalDownloadCDN.yaml"
+    path: ./ruleset/InternationalDownloadCDN.yaml
+    interval: 86400
+
+rules:
+  - DOMAIN,injections.adguard.org,DIRECT,no-resolve
+  - DOMAIN,local.adguard.org,DIRECT,no-resolve
+  - RULE-SET,private,DIRECT #私有网络
+  - RULE-SET,lancidr,DIRECT #局域网 IP 及保留 IP 地址列表
+  - RULE-SET,Direct,DIRECT #直连
+
+  #个人偏好
+  - RULE-SET,Marketing,🎯广告拦截
+  - DOMAIN-SUFFIX,kox.moe,🛫海外流量
+  
+  #游戏下载
+  - RULE-SET,ChinaDownloadCDN,DIRECT
+  - RULE-SET,InternationalDownloadCDN,🛫海外流量
+
+  #PT
+  - RULE-SET,PT,🛫海外流量
+
+  #国外服务
+  - RULE-SET,EHentai,🛫海外流量 #EHentai
+  - RULE-SET,Pixiv,🛫海外流量
+  - RULE-SET,Niconico,🛫海外流量
+  - RULE-SET,Discord,🛫海外流量
+
+  #Apple
+  - RULE-SET,Apple,🍎苹果服务
+  #Telegram
+  - RULE-SET,Telegram,🛫海外流量
+  #Twitter
+  - RULE-SET,TikTok,🛫海外流量
+  #OpenAI
+  - RULE-SET,OpenAI,🛫海外流量
+  #Microsoft
+  - RULE-SET,Microsoft,Ⓜ️微软服务
+  - RULE-SET,Bing,Ⓜ️微软服务
+
+  #Github
+  - RULE-SET,Github,🛫海外流量
+
+  #海外流媒体
+  - RULE-SET,YouTube,🛫海外流量
+  - RULE-SET,YouTubeMusic,🛫海外流量
+  - RULE-SET,GlobalMedia,🛫海外流量
+  #巴哈姆特
+  - RULE-SET,Bahamut,🛫海外流量
+  #Amazon
+  - RULE-SET,Amazon,🛫海外流量
+  - RULE-SET,AmazonIP,🛫海外流量
+
+  #Google
+  - RULE-SET,Google,🛫海外流量
+
+  #补充
+  - RULE-SET,ChinaMax,DIRECT
+  - MATCH,🐟️漏网之鱼

@@ -1,6 +1,10 @@
-# clash-meta-rules
+# clash--rules
 
-添加了常见分流的clash规则，配合clash-meta食用最佳
+添加了常见分流的简单clash规则
+
+具体分流请自行参考文件
+
+配合clash-nyanpasu食用最佳
 
 ## 感谢以下项目
 
